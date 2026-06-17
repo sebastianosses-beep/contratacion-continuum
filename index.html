@@ -274,7 +274,7 @@
           </select>
         </div>
         <input type="hidden" id="r-contract" value="Chile-Nomina">
-        <div class="field"><label>Duración</label><div id="duration-wrap"></div></div>
+        <div class="field"><label id="duration-label">Duración</label><div id="duration-wrap"></div></div>
         <div class="field"><label>Sueldo líquido (<span id="currency-tag">CLP</span>)</label><input type="text" id="r-salary" value="3.200.000"></div>
         <div class="field"><label>Costo empresa referencial (USD)</label><input type="text" id="r-cost" value="$4.681 USD/mes"></div>
         <div class="field"><label>Fecha de ingreso</label><input type="date" id="r-date" value="2026-06-01"></div>
@@ -811,13 +811,32 @@ function updateContractUI() {
   const val = document.getElementById('r-contract').value;
   document.getElementById('currency-tag').textContent = currencies[val];
   const dur = document.getElementById('duration-wrap');
+  const label = document.getElementById('duration-label');
+  const s = 'width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;';
+
   if (val.endsWith('Nomina')) {
-    dur.innerHTML = '<select id="r-duration" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;appearance:none;"><option value="12 meses">12 meses</option><option value="Indefinido">Indefinido</option></select>';
+    if (label) label.textContent = 'Duración';
+    dur.innerHTML = `<select id="r-duration" style="${s}appearance:none;"><option value="Indefinido">Indefinido</option><option value="3 meses">3 meses</option></select>`;
+  } else if (val.endsWith('Honorarios')) {
+    if (label) label.textContent = 'Plazo del contrato';
+    dur.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div><div style="font-size:11px;color:var(--text-3);margin-bottom:4px;">Fecha inicio</div><input type="date" id="r-dur-start" style="${s}" onchange="syncDuracion()"></div>
+      <div><div style="font-size:11px;color:var(--text-3);margin-bottom:4px;">Fecha fin</div><input type="date" id="r-dur-end" style="${s}" onchange="syncDuracion()"></div>
+    </div><input type="hidden" id="r-duration" value="">`;
   } else if (val === 'Internacional-Servicios') {
-    dur.innerHTML = '<input type="text" id="r-duration" value="12 meses proyectados" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">';
+    if (label) label.textContent = 'Duración';
+    dur.innerHTML = `<div style="${s}background:var(--bg-2);color:var(--text-3);border-style:dashed;box-sizing:border-box;">Indefinido</div><input type="hidden" id="r-duration" value="Indefinido">`;
   } else {
-    dur.innerHTML = '<select id="r-duration" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;appearance:none;"><option value="12 meses">12 meses</option><option value="Indefinido">Indefinido</option><option value="Otro">Otro</option></select>';
+    if (label) label.textContent = 'Duración';
+    dur.innerHTML = `<select id="r-duration" style="${s}appearance:none;"><option value="12 meses">12 meses</option><option value="Indefinido">Indefinido</option><option value="Otro">Otro</option></select>`;
   }
+}
+
+function syncDuracion() {
+  const s = document.getElementById('r-dur-start')?.value;
+  const e = document.getElementById('r-dur-end')?.value;
+  const el = document.getElementById('r-duration');
+  if (el) el.value = s && e ? `${formatDate(s)} al ${formatDate(e)}` : (s ? formatDate(s) : '');
 }
 
 function formatDate(d) {
