@@ -195,8 +195,9 @@
   <button class="switcher-btn" onclick="forceFichaVariant('Peru-Nomina')">🇵🇪 Nómina Perú</button>
   <button class="switcher-btn" onclick="forceFichaVariant('Chile-Honorarios')">📄 Honorarios Chile</button>
   <button class="switcher-btn" onclick="forceFichaVariant('Peru-Honorarios')">📄 Honorarios Perú</button>
-  <button class="switcher-btn" onclick="forceFichaVariant('Extranjero-Freelance')">🌎 Freelance Intl</button>
-  <button class="switcher-btn" onclick="forceFichaVariant('Empresa-Juridica')">💼 Empresa Jurídica</button>
+  <button class="switcher-btn" onclick="forceFichaVariant('Internacional-Servicios')">🌎 Intl Servicios</button>
+  <button class="switcher-btn" onclick="forceFichaVariant('Chile-Empresa')">💼 Empresa Chile</button>
+  <button class="switcher-btn" onclick="forceFichaVariant('Peru-Empresa')">💼 Empresa Perú</button>
 </div>
 
 <main>
@@ -260,12 +261,21 @@
       <div class="grid-2">
         <div class="field col-span-2"><label>Tipo de contrato y ubicación</label>
           <select id="r-contract" onchange="updateContractUI()">
-            <option value="Chile-Nomina">Contrato nómina — Chile 🇨🇱</option>
-            <option value="Peru-Nomina">Contrato nómina — Perú 🇵🇪</option>
-            <option value="Chile-Honorarios">Honorarios — Chile (boleta) 📄</option>
-            <option value="Peru-Honorarios">Honorarios — Perú (recibo) 📄</option>
-            <option value="Extranjero-Freelance">Prestación de servicios — Internacional 🌎</option>
-            <option value="Empresa-Juridica">Empresa jurídica 💼</option>
+            <optgroup label="Nómina — Chile y Perú">
+              <option value="Chile-Nomina">Nómina — Chile 🇨🇱</option>
+              <option value="Peru-Nomina">Nómina — Perú 🇵🇪</option>
+            </optgroup>
+            <optgroup label="Honorarios (Freelance) — Chile y Perú">
+              <option value="Chile-Honorarios">Honorarios — Chile (boleta) 🇨🇱</option>
+              <option value="Peru-Honorarios">Honorarios — Perú (recibo) 🇵🇪</option>
+            </optgroup>
+            <optgroup label="Empresa — Chile y Perú">
+              <option value="Chile-Empresa">Empresa — Chile 🇨🇱</option>
+              <option value="Peru-Empresa">Empresa — Perú 🇵🇪</option>
+            </optgroup>
+            <optgroup label="Internacional">
+              <option value="Internacional-Servicios">Servicios internacionales 🌎</option>
+            </optgroup>
           </select>
         </div>
         <div class="field"><label>Duración</label><div id="duration-wrap"></div></div>
@@ -737,14 +747,15 @@ let payload = {};
 let currentScreen = 0;
 
 const contractLabels = {
-  'Chile-Nomina': 'Nómina / Planilla Chile',
-  'Peru-Nomina': 'Nómina / Planilla Perú',
-  'Chile-Honorarios': 'Honorarios Chile (boleta)',
-  'Peru-Honorarios': 'Honorarios Perú (recibo)',
-  'Extranjero-Freelance': 'Prestación de servicios Internacional',
-  'Empresa-Juridica': 'Contrato Empresa Jurídica'
+  'Chile-Nomina': 'Nómina — Chile',
+  'Peru-Nomina': 'Nómina — Perú',
+  'Chile-Honorarios': 'Honorarios — Chile (boleta)',
+  'Peru-Honorarios': 'Honorarios — Perú (recibo)',
+  'Chile-Empresa': 'Empresa — Chile',
+  'Peru-Empresa': 'Empresa — Perú',
+  'Internacional-Servicios': 'Servicios internacionales'
 };
-const currencies = { 'Chile-Nomina':'CLP', 'Peru-Nomina':'PEN', 'Chile-Honorarios':'CLP', 'Peru-Honorarios':'PEN', 'Extranjero-Freelance':'USD', 'Empresa-Juridica':'CLP' };
+const currencies = { 'Chile-Nomina':'CLP', 'Peru-Nomina':'PEN', 'Chile-Honorarios':'CLP', 'Peru-Honorarios':'PEN', 'Chile-Empresa':'CLP', 'Peru-Empresa':'PEN', 'Internacional-Servicios':'USD' };
 const progress = [0, 15, 30, 50, 70, 100, 100];
 const stepLabels = ['Formulario interno', 'Notificación email', 'Propuesta', 'Acuerdo NDA', 'Ficha de ingreso', 'Bienvenida', 'Triggers ⚡'];
 
@@ -771,7 +782,7 @@ function updateContractUI() {
   const dur = document.getElementById('duration-wrap');
   if (val.endsWith('Nomina')) {
     dur.innerHTML = '<select id="r-duration" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;appearance:none;"><option value="12 meses">12 meses</option><option value="Indefinido">Indefinido</option></select>';
-  } else if (val === 'Extranjero-Freelance') {
+  } else if (val === 'Internacional-Servicios') {
     dur.innerHTML = '<input type="text" id="r-duration" value="12 meses proyectados" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">';
   } else {
     dur.innerHTML = '<select id="r-duration" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;appearance:none;"><option value="12 meses">12 meses</option><option value="Indefinido">Indefinido</option><option value="Otro">Otro</option></select>';
@@ -868,8 +879,8 @@ function buildPortal(e) {
 }
 
 function applyFichaVariant(contract) {
-  const isEmpresa = contract === 'Empresa-Juridica';
-  const isExtl = contract === 'Extranjero-Freelance';
+  const isEmpresa = contract.endsWith('Empresa');
+  const isExtl = contract === 'Internacional-Servicios';
   const isCl = contract === 'Chile-Nomina';
   const isPe = contract === 'Peru-Nomina';
 
@@ -903,7 +914,7 @@ function toggleNdaBtn() {
 function submitFicha(e) {
   e.preventDefault();
   const contract = document.getElementById('r-contract').value;
-  if (contract !== 'Empresa-Juridica') {
+  if (!contract.endsWith('Empresa')) {
     payload.ficha = {
       apellidos: { primero: document.getElementById('f-lastname1').value, segundo: document.getElementById('f-lastname2').value },
       ubicacion: { ciudad: document.getElementById('f-city').value, comuna: document.getElementById('f-comuna').value, direccion: document.getElementById('f-address').value },
@@ -913,7 +924,7 @@ function submitFicha(e) {
       medico: { sangre: document.getElementById('f-blood').value, alergias: document.getElementById('f-allergies').value, condicion: document.getElementById('f-condition').value },
       talla: document.getElementById('f-size').value
     };
-    if (!contract.startsWith('Extranjero')) {
+    if (contract !== 'Internacional-Servicios') {
       payload.ficha.banco = { banco: document.getElementById('f-bank').value, tipo: document.getElementById('f-bank-type').value, numero: document.getElementById('f-bank-num').value };
     } else {
       payload.ficha.banco_internacional = { banco: document.getElementById('f-intl-bank').value, moneda: document.getElementById('f-intl-currency').value, swift: document.getElementById('f-swift').value, cuenta: document.getElementById('f-intl-num').value };
