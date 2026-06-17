@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Continuum — Portal de Incorporación</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=DM+Serif+Display&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #F7F6F3;
+    --surface: #FFFFFF;
+    --border: #E4E2DC;
+    --border-strong: #C9C7BF;
+    --text: #1A1916;
+    --text-2: #5C5A54;
+    --text-3: #9B9890;
+    --accent-light: #F0EFE9;
+    --green: #2D6A4F;
+    --green-light: #D8F3DC;
+    --amber: #92400E;
+    --amber-light: #FEF3C7;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; font-size: 14px; line-height: 1.6; }
+
+  header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 52px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 8px; }
+  .logo-mark { width: 28px; height: 28px; background: var(--text); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .logo-name { font-weight: 600; font-size: 13px; letter-spacing: -0.01em; }
+
+  .progress-bar { height: 2px; background: var(--border); position: fixed; top: 52px; left: 0; right: 0; z-index: 99; }
+  .progress-fill { height: 100%; background: var(--text); transition: width 0.4s ease; width: 0%; }
+
+  main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px 80px; }
+  .screen { display: none; width: 100%; max-width: 560px; }
+  .screen.active { display: block; animation: fadeUp 0.3s ease; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; }
+  .card + .card { margin-top: 12px; }
+
+  .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-3); margin-bottom: 6px; }
+  h1.serif { font-family: 'DM Serif Display', serif; font-size: 26px; font-weight: 400; line-height: 1.2; letter-spacing: -0.01em; color: var(--text); margin-bottom: 10px; }
+  h2 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .lead { font-size: 13px; color: var(--text-2); line-height: 1.65; }
+  .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  .field { margin-bottom: 16px; }
+  .field:last-child { margin-bottom: 0; }
+  label { display: block; font-size: 11px; font-weight: 500; color: var(--text-2); margin-bottom: 5px; }
+  input[type="text"], input[type="email"], input[type="date"], select, textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-family: inherit; font-size: 13px; color: var(--text); background: var(--surface); transition: border-color 0.15s; appearance: none; -webkit-appearance: none; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--text); }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239B9890' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+  textarea { resize: vertical; min-height: 72px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .col-span-2 { grid-column: span 2; }
+
+  .check-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .check-label { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-2); cursor: pointer; }
+  .check-label input[type="checkbox"] { accent-color: var(--text); width: 14px; height: 14px; flex-shrink: 0; }
+
+  .section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-3); border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 14px; }
+
+  .btn { display: block; width: 100%; padding: 12px 20px; border-radius: var(--radius-sm); border: none; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; text-align: center; }
+  .btn-primary { background: var(--text); color: #fff; }
+  .btn-primary:hover { background: #333; }
+  .btn-primary:disabled { background: var(--border); color: var(--text-3); cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: var(--text-2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--accent-light); }
+
+  .prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+  .prop-card { background: var(--accent-light); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; }
+  .prop-card .plabel { font-size: 9px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+  .prop-card .pvalue { font-size: 13px; font-weight: 600; color: var(--text); }
+  .prop-card .pvalue.salary { font-size: 17px; color: var(--green); }
+
+  .benefit-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .benefit-item:last-child { border-bottom: none; }
+  .benefit-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .benefit-text { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+
+  .nda-box { background: var(--accent-light); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 16px; font-size: 12px; color: var(--text-2); max-height: 150px; overflow-y: auto; line-height: 1.7; margin-bottom: 20px; }
+  .nda-box strong { color: var(--text); }
+
+  .sig-area { border: 1.5px dashed var(--border-strong); border-radius: var(--radius-sm); padding: 20px; text-align: center; background: var(--accent-light); margin-bottom: 16px; }
+  .sig-area input { border: none; background: transparent; text-align: center; font-size: 20px; font-family: 'DM Serif Display', serif; color: var(--text); width: 100%; }
+  .sig-area input:focus { outline: none; }
+  .sig-area input::placeholder { color: var(--text-3); font-size: 13px; font-family: inherit; }
+  .sig-label { font-size: 11px; color: var(--text-3); margin-top: 6px; }
+
+  .accept-row { display: flex; gap: 10px; align-items: flex-start; background: var(--accent-light); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13px; color: var(--text-2); margin-bottom: 16px; cursor: pointer; }
+  .accept-row input { accent-color: var(--text); margin-top: 2px; flex-shrink: 0; }
+
+  /* EMAIL SIMULATION */
+  .email-client { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+  .email-header { background: var(--accent-light); border-bottom: 1px solid var(--border); padding: 14px 20px; font-size: 12px; color: var(--text-2); }
+  .email-body { padding: 32px; font-size: 13px; color: var(--text-2); line-height: 1.7; }
+
+  /* WELCOME */
+  .welcome-hero { text-align: center; padding: 36px 24px; background: var(--text); border-radius: var(--radius) var(--radius) 0 0; color: #fff; }
+  .welcome-hero .eyebrow { color: rgba(255,255,255,0.4); }
+  .welcome-hero h1 { color: #fff; font-size: 24px; margin-bottom: 8px; font-weight: 700; }
+  .welcome-hero .lead { color: rgba(255,255,255,0.65); font-size: 13px; }
+  .welcome-card { background: var(--surface); border: 1px solid var(--border); border-top: none; border-radius: 0 0 var(--radius) var(--radius); overflow: hidden; }
+
+  .access-item { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 14px; }
+  .access-item:last-child { border-bottom: none; }
+  .access-icon { width: 36px; height: 36px; border-radius: 8px; background: var(--accent-light); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .access-content { flex: 1; }
+  .access-title { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+  .access-desc { font-size: 12px; color: var(--text-2); }
+  .access-value { font-family: 'Inter', monospace; font-size: 12px; font-weight: 500; background: var(--accent-light); border: 1px solid var(--border); border-radius: 4px; padding: 4px 8px; margin-top: 6px; display: inline-block; color: var(--text); }
+  .access-badge { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 20px; }
+  .badge-pending { background: var(--amber-light); color: var(--amber); }
+  .badge-active { background: var(--green-light); color: var(--green); }
+
+  /* TRIGGERS */
+  .trigger-list { list-style: none; }
+  .trigger-list li { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .trigger-list li:last-child { border-bottom: none; }
+  .trigger-info { flex: 1; }
+  .trigger-title { font-weight: 500; color: var(--text); margin-bottom: 2px; }
+  .trigger-desc { font-size: 12px; color: var(--text-2); }
+  .trigger-status { font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 2px 8px; border-radius: 10px; white-space: nowrap; margin-top: 2px; flex-shrink: 0; }
+  .t-done { background: var(--green-light); color: var(--green); }
+  .t-pending { background: var(--amber-light); color: var(--amber); }
+  .t-future { background: var(--border); color: var(--text-3); }
+
+  .json-block { background: #1A1916; color: #A8E6CF; font-family: 'Inter', monospace; font-size: 11px; border-radius: var(--radius-sm); padding: 16px; overflow-x: auto; max-height: 220px; white-space: pre; border: 1px solid #333; }
+
+  .notice { border-radius: var(--radius-sm); padding: 12px 14px; font-size: 12px; line-height: 1.6; display: flex; gap: 10px; }
+  .notice.amber { background: var(--amber-light); color: var(--amber); border: 1px solid #FDE68A; }
+
+  .step-dots { display: flex; gap: 6px; justify-content: center; margin-top: 24px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); transition: all 0.2s; }
+  .dot.active { background: var(--text); width: 18px; border-radius: 3px; }
+
+  /* DEMO NAV */
+  .demo-nav { position: fixed; top: 62px; left: 50%; transform: translateX(-50%); background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 4px 6px; display: flex; gap: 4px; z-index: 98; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .demo-nav button { font-family: inherit; font-size: 11px; padding: 4px 10px; border-radius: 16px; border: none; background: transparent; color: var(--text-2); cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .demo-nav button:hover { background: var(--accent-light); }
+  .demo-nav button.active-nav { background: var(--text); color: #fff; }
+
+  /* SWITCHER */
+  .fixed-switcher { position: fixed; bottom: 20px; right: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 999; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+  .switcher-title { font-size: 9px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; text-align: center; margin-bottom: 2px; }
+  .switcher-btn { font-family: inherit; font-size: 11px; font-weight: 500; text-align: left; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--accent-light); color: var(--text-2); cursor: pointer; transition: all 0.15s; }
+  .switcher-btn:hover { background: var(--border); }
+
+  footer { text-align: center; padding: 20px; font-size: 11px; color: var(--text-3); border-top: 1px solid var(--border); background: var(--surface); }
+
+  @media (max-width: 600px) {
+    .card { padding: 20px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .col-span-2 { grid-column: span 1; }
+    .prop-grid { grid-template-columns: 1fr; }
+    .check-grid { grid-template-columns: 1fr; }
+    .demo-nav { display: none; }
+    .fixed-switcher { display: none; }
+    main { padding: 20px 12px 60px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark" style="color:white">🪼</div>
+    <span class="logo-name">Continuum</span>
+  </div>
+  <span style="font-size:11px; color:var(--text-3);" id="step-label">Portal de incorporación</span>
+</header>
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<!-- DEMO NAV -->
+<nav class="demo-nav">
+  <button class="active-nav" onclick="goTo(0)">Reclutador</button>
+  <button onclick="goTo(1)">Email 📥</button>
+  <button onclick="goTo(2)">Propuesta</button>
+  <button onclick="goTo(3)">NDA</button>
+  <button onclick="goTo(4)">Ficha</button>
+  <button onclick="goTo(5)">Bienvenida</button>
+  <button onclick="goTo(6)">Triggers ⚡</button>
+</nav>
+
+<!-- SWITCHER -->
+<div class="fixed-switcher">
+  <div class="switcher-title">Simulador de ficha</div>
+  <button class="switcher-btn" onclick="forceFichaVariant('Chile-Nomina')">🇨🇱 Nómina Chile</button>
+  <button class="switcher-btn" onclick="forceFichaVariant('Peru-Nomina')">🇵🇪 Nómina Perú</button>
+  <button class="switcher-btn" onclick="forceFichaVariant('Chile-Honorarios')">📄 Honorarios Chile</button>
+  <button class="switcher-btn" onclick="forceFichaVariant('Peru-Honorarios')">📄 Honorarios Perú</button>
+  <button class="switcher-btn" onclick="forceFichaVariant('Extranjero-Freelance')">🌎 Freelance Intl</button>
+  <button class="switcher-btn" onclick="forceFichaVariant('Empresa-Juridica')">💼 Empresa Jurídica</button>
+</div>
+
+<main>
+
+<!-- ============================= -->
+<!-- PASO 0: FORMULARIO RECLUTADOR -->
+<!-- ============================= -->
+<div class="screen active" id="screen-0">
+  <div class="card">
+    <div class="eyebrow">Formulario interno</div>
+    <h2>Nueva contratación</h2>
+    <p class="lead" style="margin-bottom:24px;">Ingresa los datos del acuerdo para generar el portal personalizado del candidato.</p>
+
+    <form onsubmit="buildPortal(event)">
+
+      <div class="section-label">Candidato</div>
+      <div class="grid-2">
+        <div class="field"><label>Nombre completo</label><input type="text" id="r-name" value="Francisco Morales Monsalves" required></div>
+        <div class="field"><label>Email personal</label><input type="email" id="r-email" value="morales.monsalves.francisco@gmail.com" required></div>
+        <div class="field col-span-2"><label>Teléfono WhatsApp</label><input type="text" id="r-phone" value="+56 9 4900 3532"></div>
+      </div>
+
+      <div class="section-label" style="margin-top:20px;">Identidad (para NDA y LATAM)</div>
+      <div class="grid-2">
+        <div class="field"><label>Tipo de documento</label>
+          <select id="r-doc-type">
+            <option value="RUT">RUT (Chile)</option>
+            <option value="DNI">DNI (Perú)</option>
+            <option value="CE">Carnet de extranjería</option>
+            <option value="Pasaporte">Pasaporte</option>
+          </select>
+        </div>
+        <div class="field"><label>Número de documento</label><input type="text" id="r-rut" value="18.594.296-1"></div>
+        <div class="field"><label>Fecha de nacimiento</label><input type="date" id="r-birthdate" value="1992-05-31"></div>
+        <div class="field"><label>Nacionalidad</label>
+          <select id="r-nationality">
+            <option value="Chilena" selected>Chilena</option>
+            <option value="Peruana">Peruana</option>
+            <option value="Colombiana">Colombiana</option>
+            <option value="Argentina">Argentina</option>
+            <option value="Venezolana">Venezolana</option>
+            <option value="Otra">Otra</option>
+          </select>
+        </div>
+        <div class="field"><label>Sexo</label>
+          <select id="r-sex"><option value="Masculino" selected>Masculino</option><option value="Femenino">Femenino</option></select>
+        </div>
+        <div class="field"><label>Estado civil</label>
+          <select id="r-civil">
+            <option value="Soltero/a" selected>Soltero/a</option>
+            <option value="Casado/a">Casado/a</option>
+            <option value="Separado/a">Separado/a</option>
+            <option value="Viudo/a">Viudo/a</option>
+            <option value="Unión Civil">Unión Civil</option>
+            <option value="Conviviente">Conviviente</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:20px;">Acuerdo comercial</div>
+      <div class="grid-2">
+        <div class="field col-span-2"><label>Tipo de contrato y ubicación</label>
+          <select id="r-contract" onchange="updateContractUI()">
+            <option value="Chile-Nomina">Contrato nómina — Chile 🇨🇱</option>
+            <option value="Peru-Nomina">Contrato nómina — Perú 🇵🇪</option>
+            <option value="Chile-Honorarios">Honorarios — Chile (boleta) 📄</option>
+            <option value="Peru-Honorarios">Honorarios — Perú (recibo) 📄</option>
+            <option value="Extranjero-Freelance">Prestación de servicios — Internacional 🌎</option>
+            <option value="Empresa-Juridica">Empresa jurídica 💼</option>
+          </select>
+        </div>
+        <div class="field"><label>Duración</label><div id="duration-wrap"></div></div>
+        <div class="field"><label>Sueldo líquido (<span id="currency-tag">CLP</span>)</label><input type="text" id="r-salary" value="3.200.000"></div>
+        <div class="field"><label>Costo empresa referencial (USD)</label><input type="text" id="r-cost" value="$4.681 USD/mes"></div>
+        <div class="field"><label>Fecha de ingreso</label><input type="date" id="r-date" value="2026-06-01"></div>
+      </div>
+
+      <div class="section-label" style="margin-top:20px;">Contexto del rol</div>
+      <div class="grid-2">
+        <div class="field"><label>Cargo</label><input type="text" id="r-role" value="Backend Engineer"></div>
+        <div class="field"><label>Seniority</label>
+          <select id="r-seniority"><option value="Semi Senior" selected>Semi Senior</option><option value="Senior">Senior</option><option value="Junior">Junior</option></select>
+        </div>
+        <div class="field"><label>Proyecto / Equipo</label><input type="text" id="r-project" value="Staff LATAM Airlines"></div>
+        <div class="field"><label>Buddy asignado</label>
+          <select id="r-buddy">
+            <option value="Jorge Tolentino">Jorge Tolentino</option>
+            <option value="Carolina Tapia">Carolina Tapia</option>
+            <option value="Natalia González">Natalia González</option>
+            <option value="Daniela Ochoa">Daniela Ochoa</option>
+            <option value="Javier Bottinelli">Javier Bottinelli</option>
+            <option value="Andrés Santa María">Andrés Santa María</option>
+            <option value="Gonzalo Vidal">Gonzalo Vidal</option>
+            <option value="Luciano Pulido">Luciano Pulido</option>
+          </select>
+        </div>
+        <div class="field col-span-2"><label>Responsabilidades principales</label>
+          <textarea id="r-desc">Diseñar y desarrollar microservicios en Node.js / Java / Go.
+Construir servicios sobre GCP (Cloud Run, Pub/Sub).
+Gestionar APIs con Apigee con contratos claros.</textarea>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:20px;">Evaluaciones completadas</div>
+      <div class="check-grid" style="margin-bottom:24px;">
+        <label class="check-label"><input type="checkbox" id="ev-1" checked> Fit cultural</label>
+        <label class="check-label"><input type="checkbox" id="ev-2" checked> Evaluación técnica</label>
+        <label class="check-label"><input type="checkbox" id="ev-3" checked> Evaluación psicológica</label>
+        <label class="check-label"><input type="checkbox" id="ev-4" checked> Aprobación contraparte</label>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Generar portal del candidato →</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- PASO 1: SIMULACIÓN DE EMAIL   -->
+<!-- ============================= -->
+<div class="screen" id="screen-1">
+  <div class="email-client">
+    <div class="email-header">
+      <div><strong>De:</strong> Continuum Talentos &lt;gestion@continuumhq.com&gt;</div>
+      <div style="margin-top:4px;"><strong>Para:</strong> <span id="em-to"></span></div>
+      <div style="margin-top:4px;"><strong>Asunto:</strong> ¡Súmate a Continuum! 🪼</div>
+    </div>
+    <div class="email-body">
+      <p style="margin-bottom:14px;">Hola <strong id="em-name"></strong>,</p>
+      <p style="margin-bottom:14px;">Nos encantó conocerte durante el proceso y nos entusiasma invitarte formalmente a ser parte de nuestro equipo.</p>
+      <p style="margin-bottom:24px;">Preparamos un portal donde podrás revisar tu propuesta, firmar el acuerdo de confidencialidad y completar tu ficha de ingreso en un solo lugar — sin correos de ida y vuelta.</p>
+      <button class="btn btn-primary" onclick="goTo(2)" style="width:auto; padding:10px 24px;">Ver propuesta e iniciar →</button>
+    </div>
+  </div>
+  <div class="step-dots">
+    <div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- PASO 2: PROPUESTA             -->
+<!-- ============================= -->
+<div class="screen" id="screen-2">
+  <div class="card">
+    <div class="eyebrow">Propuesta de incorporación</div>
+    <h1 class="serif">Hola, <span id="v-name"></span></h1>
+    <p class="lead">Nos encantó conocerte en el proceso y queremos invitarte formalmente a ser parte de Continuum. Acá están los términos de tu incorporación.</p>
+  </div>
+
+  <div class="card" style="margin-top:12px;">
+    <div class="prop-grid">
+      <div class="prop-card"><div class="plabel">Cargo</div><div class="pvalue" id="v-role"></div></div>
+      <div class="prop-card"><div class="plabel">Sueldo líquido</div><div class="pvalue salary" id="v-salary"></div></div>
+      <div class="prop-card"><div class="plabel">Contrato</div><div class="pvalue" id="v-contract"></div><div style="font-size:11px; color:var(--text-3); margin-top:3px;" id="v-duration-card"></div></div>
+      <div class="prop-card"><div class="plabel">Fecha de inicio</div><div class="pvalue" id="v-date-card"></div></div>
+    </div>
+
+    <div style="margin:0 0 20px;">
+      <div class="prop-card"><div class="plabel">Proyecto</div><div class="pvalue" id="v-project-card"></div></div>
+    </div>
+
+    <details style="border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden;">
+      <summary style="padding:12px 14px; cursor:pointer; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-2); background:var(--accent-light); display:flex; justify-content:space-between; align-items:center; list-style:none;">
+        <span>Responsabilidades y beneficios</span><span style="color:var(--text-3); font-size:11px;">ver</span>
+      </summary>
+      <div style="padding:16px; border-top:1px solid var(--border);">
+        <div style="font-weight:600; font-size:12px; margin-bottom:6px;">Responsabilidades del rol:</div>
+        <pre id="v-desc-card" style="font-family:inherit; font-size:12px; color:var(--text-2); white-space:pre-wrap; line-height:1.7; background:var(--accent-light); padding:10px; border-radius:6px; margin-bottom:16px;"></pre>
+        <div style="font-weight:600; font-size:12px; margin-bottom:8px;">Beneficios incluidos:</div>
+        <div class="benefit-item"><div class="benefit-icon">🏥</div><div class="benefit-text">Seguro complementario de salud y dental con cobertura oncológica al 100%.</div></div>
+        <div class="benefit-item"><div class="benefit-icon">🌴</div><div class="benefit-text">5 días hábiles adicionales de vacaciones y tu cumpleaños libre.</div></div>
+        <div class="benefit-item"><div class="benefit-icon">💻</div><div class="benefit-text">MacBook corporativa que pasa a ser tuya al cumplir 2 años en Continuum.</div></div>
+      </div>
+    </details>
+  </div>
+
+  <div class="card" style="margin-top:12px;">
+    <p class="lead" style="margin-bottom:16px;">Si estás de acuerdo con los términos, acepta la propuesta abajo para avanzar a la firma del acuerdo de confidencialidad.</p>
+    <label class="accept-row">
+      <input type="checkbox" id="accept-check" onchange="toggleAcceptBtn()">
+      Acepto los términos de esta propuesta de incorporación a Continuum.
+    </label>
+    <div class="field"><label>Escribe tu nombre completo para confirmar</label><input type="text" id="accept-name" placeholder="Tu nombre completo" oninput="toggleAcceptBtn()"></div>
+    <button id="accept-btn" class="btn btn-primary" disabled onclick="goTo(3)">Aceptar propuesta y firmar NDA →</button>
+  </div>
+
+  <div class="step-dots">
+    <div class="dot"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- PASO 3: NDA                   -->
+<!-- ============================= -->
+<div class="screen" id="screen-3">
+  <div class="card">
+    <div class="eyebrow">Paso 1 de 2 — Confidencialidad</div>
+    <h2>Acuerdo de confidencialidad</h2>
+    <p class="lead" style="margin-bottom:20px;">Antes de compartirte accesos e información del proyecto, necesitamos que firmes este compromiso. Documento vinculado a: <strong id="v-nda-doc"></strong></p>
+
+    <div class="nda-box">
+      <p><strong>COMPROMISO DE CONFIDENCIALIDAD — CONTINUUM SpA</strong></p><br>
+      <p>El firmante, en adelante "el Colaborador", se obliga a mantener estricta reserva sobre toda la información confidencial a la que acceda en el marco de su relación con Continuum SpA y sus clientes.</p><br>
+      <p>Se entiende por información confidencial: código fuente, arquitecturas de sistemas, datos de clientes, estrategias comerciales, credenciales de acceso y cualquier información designada como reservada por la empresa.</p><br>
+      <p>El Colaborador se compromete a no divulgar, reproducir ni utilizar dicha información para fines distintos a los establecidos en su relación contractual. Este compromiso se extiende durante toda la vigencia del contrato y por un período de 2 años posterior a su término.</p><br>
+      <p>El incumplimiento podrá dar lugar a acciones legales conforme a la legislación vigente en el país de domicilio del Colaborador.</p>
+    </div>
+
+    <div class="sig-area">
+      <div style="font-size:11px; color:var(--text-3); margin-bottom:8px;">Firma digital</div>
+      <input type="text" id="nda-sig" placeholder="Escribe tu nombre completo aquí" oninput="toggleNdaBtn()">
+      <div class="sig-label">Tu nombre completo tiene validez como firma electrónica simple</div>
+    </div>
+
+    <label class="accept-row" style="margin-bottom:16px;">
+      <input type="checkbox" id="nda-check" onchange="toggleNdaBtn()">
+      He leído y acepto los términos del compromiso de confidencialidad.
+    </label>
+
+    <button id="nda-btn" class="btn btn-primary" disabled onclick="goTo(4)">Firmar y completar ficha de ingreso →</button>
+  </div>
+  <div class="step-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- PASO 4: FICHA                 -->
+<!-- ============================= -->
+<div class="screen" id="screen-4">
+  <div class="card">
+    <div class="eyebrow">Paso 2 de 2 — Alta administrativa</div>
+    <h2>Tu ficha de incorporación</h2>
+    <p class="lead" style="margin-bottom:8px;">Necesitamos estos datos para gestionar tu contrato, liquidaciones y enviar tu kit de bienvenida.</p>
+    <div style="font-size:11px; color:var(--text-3); margin-bottom:24px; padding:6px 10px; background:var(--accent-light); border-radius:6px; display:inline-block;">Variante activa: <span id="active-variant-badge" style="font-weight:600; color:var(--text);">Nómina Chile</span></div>
+
+    <form onsubmit="submitFicha(event)">
+
+      <!-- PERSONA NATURAL -->
+      <div id="wrap-natural">
+        <div class="section-label">Datos personales</div>
+        <div class="grid-2">
+          <div class="field"><label>Primer apellido</label><input type="text" id="f-lastname1" placeholder="Morales" required></div>
+          <div class="field"><label>Segundo apellido</label><input type="text" id="f-lastname2" placeholder="Monsalves" required></div>
+          <div class="field"><label>Ciudad</label><input type="text" id="f-city" placeholder="Santiago" required></div>
+          <div class="field"><label>Comuna</label><input type="text" id="f-comuna" placeholder="Providencia" required></div>
+          <div class="field"><label>Profesión <span style="font-weight:400; color:var(--text-3);">(o último nivel de estudios)</span></label><input type="text" id="f-profession" placeholder="Ingeniero en Informática" required></div>
+          <div class="field"><label>Cargas familiares (hijos)</label>
+            <select id="f-cargas"><option value="0">Ninguna</option><option value="1">1</option><option value="2">2</option><option value="3 o más">3 o más</option></select>
+          </div>
+          <div class="field col-span-2"><label>Dirección de residencia <span style="font-weight:400; color:var(--text-3);">(para envío de kit)</span></label><input type="text" id="f-address" placeholder="Calle, número, dpto / casa" required></div>
+        </div>
+
+        <!-- BANCO LOCAL -->
+        <div id="wrap-banco-local">
+          <div class="section-label" style="margin-top:20px;">Datos bancarios</div>
+          <div class="grid-2">
+            <div class="field"><label>Banco</label>
+              <select id="f-bank">
+                <option>Banco Chile / Edwards / Citi</option><option>BancoEstado</option><option>Scotiabank</option><option>BCI</option><option>Banco Itaú</option><option>Banco Santander</option><option>BBVA</option><option>Banco Security</option><option>Tenpo Prepago</option><option>Global66</option><option>Otro</option>
+              </select>
+            </div>
+            <div class="field"><label>Tipo de cuenta</label>
+              <select id="f-bank-type"><option>Cuenta Corriente</option><option>Cuenta Vista / RUT</option></select>
+            </div>
+            <div class="field col-span-2"><label>Número de cuenta</label><input type="text" id="f-bank-num" placeholder="000000000"></div>
+          </div>
+        </div>
+
+        <!-- BANCO INTERNACIONAL -->
+        <div id="wrap-banco-intl" style="display:none;">
+          <div class="section-label" style="margin-top:20px;">Datos de pago internacional</div>
+          <div class="grid-2">
+            <div class="field"><label>Banco o plataforma de pago</label><input type="text" id="f-intl-bank" placeholder="Ej: Vitawallet, Global66, Chase"></div>
+            <div class="field"><label>Moneda de pago</label>
+              <select id="f-intl-currency"><option>USD</option><option>COP</option><option>ARS</option><option>Otra</option></select>
+            </div>
+            <div class="field"><label>SWIFT / ABA / IBAN <span style="font-weight:400; color:var(--text-3);">(0 si usas Global66)</span></label><input type="text" id="f-swift" placeholder="Código SWIFT"></div>
+            <div class="field"><label>Número de cuenta o email</label><input type="text" id="f-intl-num" placeholder="Cuenta o email asociado"></div>
+          </div>
+        </div>
+
+        <!-- PREVISIÓN CHILE -->
+        <div id="wrap-prev-cl" style="display:none;">
+          <div class="section-label" style="margin-top:20px;">Previsión</div>
+          <div class="grid-2">
+            <div class="field"><label>AFP</label>
+              <select id="f-afp"><option>AFP Capital</option><option>AFP Cuprum</option><option>AFP Habitat</option><option>AFP Modelo</option><option>AFP PlanVital</option><option>AFP ProVida</option><option>AFP Uno</option></select>
+            </div>
+            <div class="field"><label>Sistema de salud</label>
+              <select id="f-salud"><option>Fonasa</option><option>Isapre Banmédica</option><option>Isapre Colmena</option><option>Isapre Cruz Blanca</option><option>Isapre Nueva Masvida</option><option>Isapre Vida Tres</option></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- PREVISIÓN PERÚ -->
+        <div id="wrap-prev-pe" style="display:none;">
+          <div class="section-label" style="margin-top:20px;">Previsión</div>
+          <div class="grid-2">
+            <div class="field"><label>AFP / ONP</label>
+              <select id="f-pe-afp"><option>AFP Integra</option><option>AFP Prima</option><option>AFP Profuturo</option><option>AFP Hábitat</option><option>ONP</option></select>
+            </div>
+            <div class="field"><label>EPS / Essalud</label>
+              <select id="f-pe-eps"><option>Essalud</option><option>Rímac EPS</option><option>Pacífico EPS</option><option>La Positiva</option></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTACTO EMERGENCIA -->
+        <div class="section-label" style="margin-top:20px;">Contacto de emergencia</div>
+        <div class="grid-2">
+          <div class="field"><label>Nombre y apellido</label><input type="text" id="f-em-name" placeholder="Nombre completo"></div>
+          <div class="field"><label>Parentesco</label><input type="text" id="f-em-rel" placeholder="Ej: Mamá, Cónyuge"></div>
+          <div class="field col-span-2"><label>Dirección</label><input type="text" id="f-em-address" placeholder="Dirección completa"></div>
+          <div class="field col-span-2"><label>Teléfono</label><input type="text" id="f-em-phone" placeholder="+56 9 1234 5678"></div>
+        </div>
+
+        <!-- MÉDICO -->
+        <div class="section-label" style="margin-top:20px;">Información médica <span style="font-weight:400; color:var(--text-3); text-transform:none; letter-spacing:0;">(opcional)</span></div>
+        <div class="grid-2">
+          <div class="field"><label>Tipo y grupo sanguíneo</label><input type="text" id="f-blood" placeholder="Ej: O+"></div>
+          <div class="field"><label>Alergias relevantes</label><input type="text" id="f-allergies" placeholder="Ej: Penicilina"></div>
+          <div class="field col-span-2"><label>Condición médica importante</label><input type="text" id="f-condition" placeholder="Si aplica"></div>
+        </div>
+
+        <!-- KIT -->
+        <div class="section-label" style="margin-top:20px;">Kit de bienvenida</div>
+        <div class="field"><label>Talla de polera / polerón 🎁 <span style="font-weight:400; color:var(--text-3);">(te mandamos un regalo)</span></label>
+          <select id="f-size"><option value="">Selecciona tu talla</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select>
+        </div>
+      </div>
+
+      <!-- EMPRESA JURÍDICA -->
+      <div id="wrap-empresa" style="display:none;">
+        <div class="section-label">Datos de la empresa</div>
+        <div class="grid-2">
+          <div class="field col-span-2"><label>Razón social</label><input type="text" id="f-co-legal" placeholder="Nombre legal de la empresa"></div>
+          <div class="field"><label>RUT de la empresa</label><input type="text" id="f-co-rut" placeholder="12.345.678-9"></div>
+          <div class="field"><label>Representante legal</label><input type="text" id="f-co-rep" placeholder="Nombre y apellido completo"></div>
+          <div class="field col-span-2"><label>Dirección comercial</label><input type="text" id="f-co-address" placeholder="Dirección completa"></div>
+          <div class="field col-span-2"><label>Personería jurídica <span style="font-weight:400; color:var(--text-3);">(escritura pública o RES)</span></label><input type="text" id="f-co-personeria" placeholder="Fecha y notaría / código de verificación"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;">
+        <button type="submit" class="btn btn-primary">Enviar ficha y activar mi cuenta →</button>
+      </div>
+    </form>
+  </div>
+  <div class="step-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot active"></div><div class="dot"></div>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- PASO 5: BIENVENIDA            -->
+<!-- ============================= -->
+<div class="screen" id="screen-5">
+  <div style="border-radius:var(--radius); overflow:hidden; border:1px solid var(--border);">
+    <div class="welcome-hero">
+      <div class="eyebrow">Todo listo</div>
+      <h1>Bienvenido/a a Continuum, <span id="w-name"></span></h1>
+      <p class="lead">Tu incorporación está activada. Acá tienes todo lo que necesitas para tu primer día el <strong id="w-date" style="color:rgba(255,255,255,0.9);"></strong>.</p>
+    </div>
+    <div class="welcome-card">
+      <div class="access-item">
+        <div class="access-icon">📬</div>
+        <div class="access-content">
+          <div class="access-title">Tu correo corporativo</div>
+          <div class="access-desc">Recibirás un email en tu correo personal con el link para crear tu contraseña.</div>
+          <div class="access-value" id="w-email"></div>
+          <div style="margin-top:8px;"><span class="access-badge badge-pending">Activo en minutos</span></div>
+        </div>
+      </div>
+      <div class="access-item">
+        <div class="access-icon">💬</div>
+        <div class="access-content">
+          <div class="access-title">Slack — oficina digital</div>
+          <div class="access-desc">El invite llegará a tu correo personal. Es donde ocurre todo en Continuum.</div>
+          <div style="margin-top:8px;"><span class="access-badge badge-pending">Invite en camino</span></div>
+        </div>
+      </div>
+      <div class="access-item">
+        <div class="access-icon">🪼</div>
+        <div class="access-content">
+          <div class="access-title">Portal Medusa</div>
+          <div class="access-desc">Tu espacio personal en Continuum para gestionar vacaciones, liquidaciones y beneficios.</div>
+          <div style="margin-top:8px;"><span class="access-badge badge-pending">Disponible al ingresar</span></div>
+        </div>
+      </div>
+      <div class="access-item">
+        <div class="access-icon">👋</div>
+        <div class="access-content">
+          <div class="access-title">Tu buddy: <span id="w-buddy"></span></div>
+          <div class="access-desc">Te acompañará durante tus primeras semanas. Escríbele cuando tengas Slack activo para presentarte.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px;">
+    <div class="notice amber">
+      <span>📋</span>
+      <div>El equipo de gestión te contactará para coordinar la firma del contrato formal, enrolamiento y reunión de bienvenida. Escríbenos a <strong>gestion@continuumhq.com</strong> si tienes dudas.</div>
+    </div>
+  </div>
+
+  <div class="step-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot active"></div>
+  </div>
+  <div style="text-align:center; margin-top:20px;">
+    <button class="btn btn-ghost" style="width:auto; padding:10px 20px;" onclick="goTo(6)">Ver triggers automáticos ⚡</button>
+  </div>
+</div>
+
+<!-- ============================= -->
+<!-- PASO 6: TRIGGERS              -->
+<!-- ============================= -->
+<div class="screen" id="screen-6">
+  <div class="card">
+    <div class="eyebrow">Consola de automatización</div>
+    <h2>Triggers activados</h2>
+    <p class="lead" style="margin-bottom:20px;">Lo que ocurre en el backend en el momento en que el candidato completa la ficha.</p>
+
+    <ul class="trigger-list">
+      <li>
+        <div class="trigger-info">
+          <div class="trigger-title">Notificación Slack #contrataciones</div>
+          <div class="trigger-desc">Mensaje automático con datos del acuerdo y checklist de evaluaciones. Sin redacción manual.</div>
+        </div>
+        <span class="trigger-status t-done">Inmediato</span>
+      </li>
+      <li>
+        <div class="trigger-info">
+          <div class="trigger-title">Creación de correo Google Workspace</div>
+          <div class="trigger-desc">Aprovisionamiento automático de <span id="t-email" style="font-family:monospace;"></span> — sin intervención de internal tools.</div>
+        </div>
+        <span class="trigger-status t-done">Inmediato</span>
+      </li>
+      <li>
+        <div class="trigger-info">
+          <div class="trigger-title">Invite a Slack corporativo</div>
+          <div class="trigger-desc">Enviado al correo personal del candidato con acceso al workspace.</div>
+        </div>
+        <span class="trigger-status t-done">Inmediato</span>
+      </li>
+      <li>
+        <div class="trigger-info">
+          <div class="trigger-title">Envío de datos a LATAM Airlines</div>
+          <div class="trigger-desc">Payload de identidad enviado para creación de BP y cuenta LATAM. El SLA de 3 días hábiles empieza a correr desde este momento.</div>
+        </div>
+        <span class="trigger-status t-done">Inmediato</span>
+      </li>
+      <li>
+        <div class="trigger-info">
+          <div class="trigger-title">Activación Portal Medusa</div>
+          <div class="trigger-desc">Perfil creado con contadores de vacaciones y beneficios calibrados según fecha de ingreso.</div>
+        </div>
+        <span class="trigger-status t-done">Inmediato</span>
+      </li>
+      <li>
+        <div class="trigger-info">
+          <div class="trigger-title">Alta en Talana + emisión de contrato</div>
+          <div class="trigger-desc">Admin recibe datos consolidados vía Slack para crear ficha en Talana y emitir contrato formal para firma.</div>
+        </div>
+        <span class="trigger-status t-pending">Admin activa</span>
+      </li>
+      <li>
+        <div class="trigger-info">
+          <div class="trigger-title">Coordinación computador y kit de bienvenida</div>
+          <div class="trigger-desc">Notificación automática a Cris con dirección de envío y talla para preparar el kit.</div>
+        </div>
+        <span class="trigger-status t-pending">Admin activa</span>
+      </li>
+      <li>
+        <div class="trigger-info">
+          <div class="trigger-title">Actualización de planillas operacionales</div>
+          <div class="trigger-desc">Inyección automática en spreadsheets de ocupación, facturación, márgenes y cotizador con sueldo, costo empresa, fecha de ingreso y rol.</div>
+        </div>
+        <span class="trigger-status t-pending">Admin activa</span>
+      </li>
+      <li>
+        <div class="trigger-info">
+          <div class="trigger-title">Cuentas Cabify y Bemmbo</div>
+          <div class="trigger-desc">Solicitud enviada a Lo por Slack para crear accesos de beneficios.</div>
+        </div>
+        <span class="trigger-status t-future">Post contrato</span>
+      </li>
+      <li>
+        <div class="trigger-info">
+          <div class="trigger-title">Seguro complementario Consorcio</div>
+          <div class="trigger-desc">Formulario enviado al candidato en la reunión de bienvenida coordinada por gestión.</div>
+        </div>
+        <span class="trigger-status t-future">Post ingreso</span>
+      </li>
+    </ul>
+
+    <hr class="divider">
+    <div class="section-label">Payload JSON — webhook unificado</div>
+    <div class="json-block" id="json-out"></div>
+
+    <div style="margin-top:20px; text-align:center;">
+      <button class="btn btn-ghost" style="width:auto; padding:10px 24px;" onclick="location.reload()">↺ Reiniciar simulación</button>
+    </div>
+  </div>
+</div>
+
+</main>
+<footer>Continuum SpA &nbsp;·&nbsp; Portal de incorporación</footer>
+
+<script>
+let payload = {};
+let currentScreen = 0;
+
+const contractLabels = {
+  'Chile-Nomina': 'Nómina / Planilla Chile',
+  'Peru-Nomina': 'Nómina / Planilla Perú',
+  'Chile-Honorarios': 'Honorarios Chile (boleta)',
+  'Peru-Honorarios': 'Honorarios Perú (recibo)',
+  'Extranjero-Freelance': 'Prestación de servicios Internacional',
+  'Empresa-Juridica': 'Contrato Empresa Jurídica'
+};
+const currencies = { 'Chile-Nomina':'CLP', 'Peru-Nomina':'PEN', 'Chile-Honorarios':'CLP', 'Peru-Honorarios':'PEN', 'Extranjero-Freelance':'USD', 'Empresa-Juridica':'CLP' };
+const progress = [0, 15, 30, 50, 70, 100, 100];
+const stepLabels = ['Formulario interno', 'Notificación email', 'Propuesta', 'Acuerdo NDA', 'Ficha de ingreso', 'Bienvenida', 'Triggers ⚡'];
+
+function goTo(n) {
+  document.getElementById('screen-' + currentScreen).classList.remove('active');
+  document.getElementById('screen-' + n).classList.add('active');
+  document.querySelectorAll('.demo-nav button').forEach((b,i) => b.classList.toggle('active-nav', i===n));
+  document.getElementById('progress').style.width = progress[n] + '%';
+  document.getElementById('step-label').textContent = stepLabels[n];
+  currentScreen = n;
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function forceFichaVariant(key) {
+  document.getElementById('r-contract').value = key;
+  updateContractUI();
+  document.getElementById('active-variant-badge').textContent = contractLabels[key];
+  applyFichaVariant(key);
+}
+
+function updateContractUI() {
+  const val = document.getElementById('r-contract').value;
+  document.getElementById('currency-tag').textContent = currencies[val];
+  const dur = document.getElementById('duration-wrap');
+  if (val.endsWith('Nomina')) {
+    dur.innerHTML = '<select id="r-duration" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;appearance:none;"><option value="12 meses">12 meses</option><option value="Indefinido">Indefinido</option></select>';
+  } else if (val === 'Extranjero-Freelance') {
+    dur.innerHTML = '<input type="text" id="r-duration" value="12 meses proyectados" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;">';
+  } else {
+    dur.innerHTML = '<select id="r-duration" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;appearance:none;"><option value="12 meses">12 meses</option><option value="Indefinido">Indefinido</option><option value="Otro">Otro</option></select>';
+  }
+}
+
+function formatDate(d) {
+  if (!d) return '';
+  const [y,m,day] = d.split('-');
+  const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  return `${parseInt(day)} de ${months[parseInt(m)-1]} de ${y}`;
+}
+
+function calcEmail(name) {
+  let clean = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z\s]/g,"");
+  let parts = clean.trim().split(/\s+/);
+  return (parts[0]||'usuario') + '.' + (parts[1]||'continuum') + '@continuumhq.com';
+}
+
+function buildPortal(e) {
+  e.preventDefault();
+  const contract = document.getElementById('r-contract').value;
+  const name = document.getElementById('r-name').value;
+  const date = document.getElementById('r-date').value;
+  const email = document.getElementById('r-email').value;
+
+  payload = {
+    recruiter: {
+      nombre: name,
+      email_personal: email,
+      whatsapp: document.getElementById('r-phone').value,
+      tipo_documento: document.getElementById('r-doc-type').value,
+      numero_documento: document.getElementById('r-rut').value,
+      fecha_nacimiento: document.getElementById('r-birthdate').value,
+      nacionalidad: document.getElementById('r-nationality').value,
+      sexo: document.getElementById('r-sex').value,
+      estado_civil: document.getElementById('r-civil').value
+    },
+    contrato: {
+      tipo: contract,
+      label: contractLabels[contract],
+      duracion: document.getElementById('r-duration').value,
+      sueldo_liquido: document.getElementById('r-salary').value,
+      moneda: currencies[contract],
+      costo_empresa_usd: document.getElementById('r-cost').value,
+      fecha_ingreso: date
+    },
+    rol: {
+      cargo: document.getElementById('r-role').value,
+      seniority: document.getElementById('r-seniority').value,
+      proyecto: document.getElementById('r-project').value,
+      buddy: document.getElementById('r-buddy').value,
+      descripcion: document.getElementById('r-desc').value
+    },
+    evaluaciones: {
+      fit_cultural: document.getElementById('ev-1').checked,
+      tecnica: document.getElementById('ev-2').checked,
+      psicologica: document.getElementById('ev-3').checked,
+      contraparte: document.getElementById('ev-4').checked
+    },
+    metadata: {
+      correo_corporativo: calcEmail(name),
+      timestamp: new Date().toISOString()
+    }
+  };
+
+  const firstName = name.split(' ')[0];
+  document.getElementById('em-to').textContent = email;
+  document.getElementById('em-name').textContent = firstName;
+  document.getElementById('v-name').textContent = firstName;
+  document.getElementById('v-role').textContent = `${payload.rol.cargo} [${payload.rol.seniority}]`;
+  document.getElementById('v-salary').textContent = `${payload.contrato.sueldo_liquido} ${payload.contrato.moneda}`;
+  document.getElementById('v-contract').textContent = payload.contrato.label;
+  document.getElementById('v-duration-card').textContent = `Duración: ${payload.contrato.duracion}`;
+  document.getElementById('v-date-card').textContent = formatDate(date);
+  document.getElementById('v-project-card').textContent = payload.rol.proyecto;
+  document.getElementById('v-desc-card').textContent = payload.rol.descripcion;
+  document.getElementById('v-nda-doc').textContent = `${payload.recruiter.tipo_documento} ${payload.recruiter.numero_documento}`;
+  document.getElementById('w-name').textContent = firstName;
+  document.getElementById('w-date').textContent = formatDate(date);
+  document.getElementById('w-email').textContent = payload.metadata.correo_corporativo;
+  document.getElementById('w-buddy').textContent = payload.rol.buddy;
+  document.getElementById('t-email').textContent = payload.metadata.correo_corporativo;
+  document.getElementById('active-variant-badge').textContent = contractLabels[contract];
+  document.getElementById('json-out').textContent = JSON.stringify(payload, null, 2);
+
+  applyFichaVariant(contract);
+  goTo(1);
+}
+
+function applyFichaVariant(contract) {
+  const isEmpresa = contract === 'Empresa-Juridica';
+  const isExtl = contract === 'Extranjero-Freelance';
+  const isCl = contract === 'Chile-Nomina';
+  const isPe = contract === 'Peru-Nomina';
+
+  document.getElementById('wrap-natural').style.display = isEmpresa ? 'none' : 'block';
+  document.getElementById('wrap-empresa').style.display = isEmpresa ? 'block' : 'none';
+  if (!isEmpresa) {
+    document.getElementById('wrap-banco-local').style.display = isExtl ? 'none' : 'block';
+    document.getElementById('wrap-banco-intl').style.display = isExtl ? 'block' : 'none';
+    document.getElementById('wrap-prev-cl').style.display = isCl ? 'block' : 'none';
+    document.getElementById('wrap-prev-pe').style.display = isPe ? 'block' : 'none';
+  }
+}
+
+function toggleAcceptBtn() {
+  const checked = document.getElementById('accept-check').checked;
+  const name = document.getElementById('accept-name').value.trim();
+  document.getElementById('accept-btn').disabled = !(checked && name.length > 3);
+}
+
+function toggleNdaBtn() {
+  const checked = document.getElementById('nda-check').checked;
+  const sig = document.getElementById('nda-sig').value.trim();
+  document.getElementById('nda-btn').disabled = !(checked && sig.length > 3);
+}
+
+function submitFicha(e) {
+  e.preventDefault();
+  const contract = document.getElementById('r-contract').value;
+  if (contract !== 'Empresa-Juridica') {
+    payload.ficha = {
+      apellidos: { primero: document.getElementById('f-lastname1').value, segundo: document.getElementById('f-lastname2').value },
+      ubicacion: { ciudad: document.getElementById('f-city').value, comuna: document.getElementById('f-comuna').value, direccion: document.getElementById('f-address').value },
+      profesion: document.getElementById('f-profession').value,
+      cargas: document.getElementById('f-cargas').value,
+      emergencia: { nombre: document.getElementById('f-em-name').value, parentesco: document.getElementById('f-em-rel').value, direccion: document.getElementById('f-em-address').value, telefono: document.getElementById('f-em-phone').value },
+      medico: { sangre: document.getElementById('f-blood').value, alergias: document.getElementById('f-allergies').value, condicion: document.getElementById('f-condition').value },
+      talla: document.getElementById('f-size').value
+    };
+    if (!contract.startsWith('Extranjero')) {
+      payload.ficha.banco = { banco: document.getElementById('f-bank').value, tipo: document.getElementById('f-bank-type').value, numero: document.getElementById('f-bank-num').value };
+    } else {
+      payload.ficha.banco_internacional = { banco: document.getElementById('f-intl-bank').value, moneda: document.getElementById('f-intl-currency').value, swift: document.getElementById('f-swift').value, cuenta: document.getElementById('f-intl-num').value };
+    }
+    if (contract === 'Chile-Nomina') payload.ficha.prevision = { afp: document.getElementById('f-afp').value, salud: document.getElementById('f-salud').value };
+    if (contract === 'Peru-Nomina') payload.ficha.prevision = { afp: document.getElementById('f-pe-afp').value, eps: document.getElementById('f-pe-eps').value };
+  } else {
+    payload.empresa = { razon_social: document.getElementById('f-co-legal').value, rut: document.getElementById('f-co-rut').value, representante: document.getElementById('f-co-rep').value, direccion: document.getElementById('f-co-address').value, personeria: document.getElementById('f-co-personeria').value };
+  }
+  document.getElementById('json-out').textContent = JSON.stringify(payload, null, 2);
+  goTo(5);
+}
+
+window.onload = () => { updateContractUI(); };
+</script>
+</body>
+</html>
