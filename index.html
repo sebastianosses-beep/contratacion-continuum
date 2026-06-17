@@ -259,25 +259,21 @@
 
       <div class="section-label" style="margin-top:20px;">Acuerdo comercial</div>
       <div class="grid-2">
-        <div class="field col-span-2"><label>Tipo de contrato y ubicación</label>
-          <select id="r-contract" onchange="updateContractUI()">
-            <optgroup label="Nómina — Chile y Perú">
-              <option value="Chile-Nomina">Nómina — Chile 🇨🇱</option>
-              <option value="Peru-Nomina">Nómina — Perú 🇵🇪</option>
-            </optgroup>
-            <optgroup label="Honorarios (Freelance) — Chile y Perú">
-              <option value="Chile-Honorarios">Honorarios — Chile (boleta) 🇨🇱</option>
-              <option value="Peru-Honorarios">Honorarios — Perú (recibo) 🇵🇪</option>
-            </optgroup>
-            <optgroup label="Empresa — Chile y Perú">
-              <option value="Chile-Empresa">Empresa — Chile 🇨🇱</option>
-              <option value="Peru-Empresa">Empresa — Perú 🇵🇪</option>
-            </optgroup>
-            <optgroup label="Internacional">
-              <option value="Internacional-Servicios">Servicios internacionales 🌎</option>
-            </optgroup>
+        <div class="field"><label>Contratación</label>
+          <select id="r-pais" onchange="updateContractFromSelects()">
+            <option value="Chile">Chile 🇨🇱</option>
+            <option value="Peru">Perú 🇵🇪</option>
+            <option value="Internacional">Internacional 🌎</option>
           </select>
         </div>
+        <div class="field"><label>Modalidad</label>
+          <select id="r-modalidad" onchange="updateContractFromSelects()">
+            <option value="Nomina">Nómina / Planilla</option>
+            <option value="Empresa">Empresa jurídica</option>
+            <option value="Servicios">Prestación de servicios</option>
+          </select>
+        </div>
+        <input type="hidden" id="r-contract" value="Chile-Nomina">
         <div class="field"><label>Duración</label><div id="duration-wrap"></div></div>
         <div class="field"><label>Sueldo líquido (<span id="currency-tag">CLP</span>)</label><input type="text" id="r-salary" value="3.200.000"></div>
         <div class="field"><label>Costo empresa referencial (USD)</label><input type="text" id="r-cost" value="$4.681 USD/mes"></div>
@@ -769,7 +765,42 @@ function goTo(n) {
   window.scrollTo({top:0, behavior:'smooth'});
 }
 
+const contractMap = {
+  'Chile-Nomina': 'Chile-Nomina', 'Chile-Empresa': 'Chile-Empresa', 'Chile-Servicios': 'Chile-Honorarios',
+  'Peru-Nomina': 'Peru-Nomina', 'Peru-Empresa': 'Peru-Empresa', 'Peru-Servicios': 'Peru-Honorarios',
+  'Internacional-Servicios': 'Internacional-Servicios'
+};
+const reverseMap = {
+  'Chile-Nomina': ['Chile','Nomina'], 'Chile-Honorarios': ['Chile','Servicios'], 'Chile-Empresa': ['Chile','Empresa'],
+  'Peru-Nomina': ['Peru','Nomina'], 'Peru-Honorarios': ['Peru','Servicios'], 'Peru-Empresa': ['Peru','Empresa'],
+  'Internacional-Servicios': ['Internacional','Servicios']
+};
+
+function updateContractFromSelects() {
+  const pais = document.getElementById('r-pais').value;
+  const modalidadSel = document.getElementById('r-modalidad');
+  const prev = modalidadSel.value;
+  if (pais === 'Internacional') {
+    modalidadSel.innerHTML = '<option value="Servicios">Prestación de servicios</option>';
+  } else if (!modalidadSel.querySelector('option[value="Nomina"]')) {
+    modalidadSel.innerHTML = '<option value="Nomina">Nómina / Planilla</option><option value="Empresa">Empresa jurídica</option><option value="Servicios">Prestación de servicios</option>';
+    if (['Nomina','Empresa','Servicios'].includes(prev)) modalidadSel.value = prev;
+  }
+  const key = `${pais}-${modalidadSel.value}`;
+  document.getElementById('r-contract').value = contractMap[key] || 'Chile-Nomina';
+  updateContractUI();
+}
+
 function forceFichaVariant(key) {
+  const [pais, modalidad] = reverseMap[key] || ['Chile','Nomina'];
+  document.getElementById('r-pais').value = pais;
+  const modalidadSel = document.getElementById('r-modalidad');
+  if (pais === 'Internacional') {
+    modalidadSel.innerHTML = '<option value="Servicios">Prestación de servicios</option>';
+  } else {
+    modalidadSel.innerHTML = '<option value="Nomina">Nómina / Planilla</option><option value="Empresa">Empresa jurídica</option><option value="Servicios">Prestación de servicios</option>';
+  }
+  modalidadSel.value = modalidad;
   document.getElementById('r-contract').value = key;
   updateContractUI();
   document.getElementById('active-variant-badge').textContent = contractLabels[key];
@@ -938,7 +969,7 @@ function submitFicha(e) {
   goTo(5);
 }
 
-window.onload = () => { updateContractUI(); };
+window.onload = () => { updateContractFromSelects(); };
 </script>
 </body>
 </html>
