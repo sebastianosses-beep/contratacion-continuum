@@ -300,7 +300,20 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
         </div>
       </div>
 
-      <div class="section-label" style="margin-top:20px;">Evaluaciones completadas</div>
+      <div class="section-label" style="margin-top:20px;">Staff LATAM</div>
+      <div style="margin-bottom:20px;">
+        <label class="check-label" style="margin-bottom:10px; display:flex; align-items:center; gap:8px;">
+          <input type="checkbox" id="r-latam" onchange="toggleLatam()"> Este candidato es Staff LATAM — notificar al líder automáticamente
+        </label>
+        <div id="latam-fields" style="display:none; margin-top:12px;">
+          <div class="form-grid">
+            <div class="field"><label>Nombre del líder LATAM</label><input type="text" id="r-latam-name" placeholder="Ej: Carolina Riquelme"></div>
+            <div class="field"><label>Correo del líder LATAM</label><input type="email" id="r-latam-email" placeholder="lider@latam.com"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:4px;">Evaluaciones completadas</div>
       <div class="check-grid" style="margin-bottom:24px;">
         <label class="check-label"><input type="checkbox" id="ev-1" checked> Fit cultural</label>
         <label class="check-label"><input type="checkbox" id="ev-2" checked> Evaluación técnica</label>
@@ -819,6 +832,11 @@ function buildPortal(e) {
       psicologica: document.getElementById('ev-3').checked,
       contraparte: document.getElementById('ev-4').checked
     },
+    latam: document.getElementById('r-latam').checked ? {
+      es_staff_latam: true,
+      lider_nombre: document.getElementById('r-latam-name').value,
+      lider_email: document.getElementById('r-latam-email').value
+    } : { es_staff_latam: false },
     metadata: {
       correo_corporativo: calcEmail(name),
       timestamp: new Date().toISOString()
@@ -863,6 +881,11 @@ function applyFichaVariant(contract) {
     document.getElementById('wrap-prev-cl').style.display = isCl ? 'block' : 'none';
     document.getElementById('wrap-prev-pe').style.display = isPe ? 'block' : 'none';
   }
+}
+
+function toggleLatam() {
+  const checked = document.getElementById('r-latam').checked;
+  document.getElementById('latam-fields').style.display = checked ? 'block' : 'none';
 }
 
 function toggleAcceptBtn() {
