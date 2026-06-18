@@ -506,6 +506,16 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
           </div>
         </div>
 
+        <!-- UBICACIÓN INTERNACIONAL -->
+        <div id="wrap-ubic-intl" style="display:none;">
+          <div class="grid-2">
+            <div class="field col-span-2"><label>Dirección completa <span style="font-weight:400; color:var(--text-3);">(residencia habitual — enviaremos tu kit aquí)</span></label><input type="text" id="f-intl-address" placeholder="Calle, número, dpto / casa"></div>
+            <div class="field"><label>Ciudad</label><input type="text" id="f-intl-city" placeholder="Ciudad"></div>
+            <div class="field"><label>Código postal</label><input type="text" id="f-intl-postal" placeholder="00000"></div>
+            <div class="field col-span-2"><label>País</label><input type="text" id="f-intl-country" placeholder="País de residencia"></div>
+          </div>
+        </div>
+
         <!-- BANCO LOCAL CHILE -->
         <div id="wrap-banco-local">
           <div class="section-label" style="margin-top:20px;">Datos bancarios</div>
@@ -528,7 +538,7 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
           <div class="grid-2">
             <div class="field"><label>Banco o plataforma de pago</label><input type="text" id="f-intl-bank" placeholder="Ej: Vitawallet, Global66, Chase"></div>
             <div class="field"><label>Moneda de pago</label>
-              <select id="f-intl-currency"><option>USD</option><option>COP</option><option>ARS</option><option>Otra</option></select>
+              <select id="f-intl-currency"><option>USD — Dólar Estadounidense</option><option>COP — Peso Colombiano</option><option>ARS — Peso Argentino</option><option>VES — Bolívar</option><option>Otra</option></select>
             </div>
             <div class="field"><label>SWIFT / ABA / IBAN <span style="font-weight:400; color:var(--text-3);">(0 si usas Global66)</span></label><input type="text" id="f-swift" placeholder="Código SWIFT"></div>
             <div class="field"><label>Número de cuenta o email</label><input type="text" id="f-intl-num" placeholder="Cuenta o email asociado"></div>
@@ -669,6 +679,28 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
         <div class="section-label" style="margin-top:20px;">Kit de bienvenida</div>
         <div class="field"><label>Talla de polera / polerón 🎁 <span style="font-weight:400; color:var(--text-3);">(te mandamos un regalo)</span></label>
           <select id="f-size"><option value="">Selecciona tu talla</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select>
+        </div>
+
+        <!-- DOCUMENTOS INTERNACIONAL -->
+        <div id="wrap-docs-intl" style="display:none;">
+          <div class="section-label" style="margin-top:20px;">Documentos</div>
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div class="field">
+              <label>Foto de perfil</label>
+              <div style="font-size:12px; color:var(--text-3); margin-bottom:6px;">La usaremos en el sistema interno. Máx. 10 MB.</div>
+              <input type="file" id="f-intl-foto" accept=".jpg,.jpeg,.png" style="font-size:13px; width:100%;">
+            </div>
+            <div class="field">
+              <label>Certificado de Residencia Fiscal <span style="font-weight:400; color:var(--text-3);">(opcional)</span></label>
+              <div style="font-size:12px; color:var(--text-3); margin-bottom:6px;">Máx. 10 MB.</div>
+              <input type="file" id="f-intl-cert-residencia" accept=".pdf,.jpg,.png" style="font-size:13px; width:100%;">
+            </div>
+            <div class="field">
+              <label>VISA de trabajo <span style="font-weight:400; color:var(--text-3);">(si aplica)</span></label>
+              <div style="font-size:12px; color:var(--text-3); margin-bottom:6px;">Máx. 10 MB.</div>
+              <input type="file" id="f-intl-visa" accept=".pdf,.jpg,.png" style="font-size:13px; width:100%;">
+            </div>
+          </div>
         </div>
 
         <!-- DOCUMENTOS CHILE NÓMINA -->
@@ -1086,13 +1118,15 @@ function applyFichaVariant(contract) {
   document.getElementById('wrap-natural').style.display = isEmpresa ? 'none' : 'block';
   document.getElementById('wrap-empresa').style.display = isEmpresa ? 'block' : 'none';
   if (!isEmpresa) {
-    document.getElementById('wrap-ubic-cl').style.display = isPe ? 'none' : 'block';
+    document.getElementById('wrap-ubic-cl').style.display = (!isPe && !isExtl) ? 'block' : 'none';
     document.getElementById('wrap-ubic-pe').style.display = isPe ? 'block' : 'none';
+    document.getElementById('wrap-ubic-intl').style.display = isExtl ? 'block' : 'none';
     document.getElementById('wrap-banco-local').style.display = (isExtl || isPe) ? 'none' : 'block';
     document.getElementById('wrap-banco-pe').style.display = isPe ? 'block' : 'none';
     document.getElementById('wrap-banco-intl').style.display = isExtl ? 'block' : 'none';
     document.getElementById('wrap-prev-cl').style.display = isCl ? 'block' : 'none';
     document.getElementById('wrap-docs-cl').style.display = isCl ? 'block' : 'none';
+    document.getElementById('wrap-docs-intl').style.display = isExtl ? 'block' : 'none';
     document.getElementById('wrap-prev-pe').style.display = isPe ? 'block' : 'none';
     document.getElementById('wrap-familia-pe').style.display = isPe ? 'block' : 'none';
     document.getElementById('wrap-edu-pe').style.display = isPe ? 'block' : 'none';
