@@ -411,7 +411,7 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
       Acepto los términos de esta propuesta de incorporación a Continuum.
     </label>
     <div class="field"><label>Escribe tu nombre completo para confirmar</label><input type="text" id="accept-name" placeholder="Tu nombre completo" oninput="toggleAcceptBtn()"></div>
-    <button id="accept-btn" class="btn btn-primary" disabled onclick="goTo(3)">Aceptar propuesta y firmar NDA →</button>
+    <button id="accept-btn" class="btn btn-primary" disabled onclick="acceptPropuesta()">Aceptar propuesta y firmar NDA →</button>
   </div>
 
   <div class="step-dots">
@@ -447,7 +447,7 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
       He leído y acepto los términos del compromiso de confidencialidad.
     </label>
 
-    <button id="nda-btn" class="btn btn-primary" disabled onclick="goTo(4)">Firmar y completar ficha de ingreso →</button>
+    <button id="nda-btn" class="btn btn-primary" disabled onclick="signNda()">Firmar y completar ficha de ingreso →</button>
   </div>
   <div class="step-dots">
     <div class="dot"></div><div class="dot"></div><div class="dot active"></div><div class="dot"></div><div class="dot"></div>
@@ -924,7 +924,7 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
 
 <script>
 // Pegar aquí la URL del Web App de Apps Script después de desplegarlo
-const GAS_URL = '';
+const GAS_URL = 'https://script.google.com/a/macros/continuumhq.com/s/AKfycbx5gIKdtRzOmbCn38oXquKOX92icqokcilZuOYeAmu02OZsoei3qhIprZYc5OtSqTRCoA/exec';
 
 let payload = {};
 let currentScreen = 0;
@@ -1157,6 +1157,26 @@ function toggleNdaBtn() {
   const checked = document.getElementById('nda-check').checked;
   const sig = document.getElementById('nda-sig').value.trim();
   document.getElementById('nda-btn').disabled = !(checked && sig.length > 3);
+}
+
+function acceptPropuesta() {
+  payload.firmas = payload.firmas || {};
+  payload.firmas.propuesta = {
+    acepta: true,
+    nombre_confirmacion: document.getElementById('accept-name').value.trim(),
+    timestamp: new Date().toISOString()
+  };
+  goTo(3);
+}
+
+function signNda() {
+  payload.firmas = payload.firmas || {};
+  payload.firmas.nda = {
+    acepta: true,
+    firma: document.getElementById('nda-sig').value.trim(),
+    timestamp: new Date().toISOString()
+  };
+  goTo(4);
 }
 
 function submitFicha(e) {
