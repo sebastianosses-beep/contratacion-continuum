@@ -923,6 +923,9 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
 <footer>Continuum SpA &nbsp;·&nbsp; Portal de incorporación</footer>
 
 <script>
+// Pegar aquí la URL del Web App de Apps Script después de desplegarlo
+const GAS_URL = '';
+
 let payload = {};
 let currentScreen = 0;
 
@@ -1218,10 +1221,23 @@ function submitFicha(e) {
         empleo_anterior_planilla: document.querySelector('input[name="f-pe-prev-emp"]:checked')?.value === 'si'
       };
     }
+    if (contract === 'Internacional-Servicios') {
+      payload.ficha.ubicacion = {
+        direccion: document.getElementById('f-intl-address').value,
+        ciudad: document.getElementById('f-intl-city').value,
+        codigo_postal: document.getElementById('f-intl-postal').value,
+        pais: document.getElementById('f-intl-country').value
+      };
+    }
   } else {
     payload.empresa = { razon_social: document.getElementById('f-co-legal').value, rut: document.getElementById('f-co-rut').value, representante: document.getElementById('f-co-rep').value, direccion: document.getElementById('f-co-address').value, personeria: document.getElementById('f-co-personeria').value };
   }
   document.getElementById('json-out').textContent = JSON.stringify(payload, null, 2);
+
+  if (GAS_URL) {
+    fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }).catch(() => {});
+  }
+
   goTo(5);
 }
 
