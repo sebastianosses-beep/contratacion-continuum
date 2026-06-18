@@ -280,6 +280,19 @@
         <div class="field"><label id="duration-label">Duración</label><div id="duration-wrap"></div></div>
       </div>
 
+      <div id="empresa-section" style="display:none;">
+        <div class="section-label" style="margin-top:20px;">Datos de empresa</div>
+        <div class="grid-2">
+          <div class="field"><label>Razón social</label><input type="text" id="e-razon-social" placeholder="Nombre legal de la empresa"></div>
+          <div class="field"><label>RUT empresa</label><input type="text" id="e-rut" placeholder="Ej: 76.123.456-7"></div>
+          <div class="field"><label>Representante legal</label><input type="text" id="e-representante" placeholder="Nombre completo"></div>
+          <div class="field"><label>Dirección</label><input type="text" id="e-direccion" placeholder="Dirección comercial"></div>
+          <div class="field col-span-2"><label>Descripción del proyecto</label>
+            <textarea id="e-desc" placeholder="Descripción general del proyecto o servicio contratado..."></textarea>
+          </div>
+        </div>
+      </div>
+
       <div class="section-label" style="margin-top:20px;">Contexto del rol</div>
       <div class="grid-2">
         <div class="field"><label>Cargo</label><input type="text" id="r-role" value="Backend Engineer"></div>
@@ -789,6 +802,8 @@ function updateContractFromSelects() {
   const key = `${pais}-${modalidadSel.value}`;
   document.getElementById('r-contract').value = contractMap[key] || 'Chile-Nomina';
   updateContractUI();
+  const isEmpresa = key.endsWith('Empresa');
+  document.getElementById('empresa-section').style.display = isEmpresa ? 'block' : 'none';
 }
 
 function forceFichaVariant(key) {
@@ -803,6 +818,7 @@ function forceFichaVariant(key) {
   modalidadSel.value = modalidad;
   document.getElementById('r-contract').value = key;
   updateContractUI();
+  document.getElementById('empresa-section').style.display = key.endsWith('Empresa') ? 'block' : 'none';
   document.getElementById('active-variant-badge').textContent = contractLabels[key];
   applyFichaVariant(key);
 }
@@ -885,6 +901,13 @@ function buildPortal(e) {
       lider_nombre: document.getElementById('r-latam-name').value,
       lider_email: document.getElementById('r-latam-email').value
     } : { es_staff_latam: false },
+    empresa: contract.endsWith('Empresa') ? {
+      razon_social: document.getElementById('e-razon-social').value,
+      rut: document.getElementById('e-rut').value,
+      representante_legal: document.getElementById('e-representante').value,
+      direccion: document.getElementById('e-direccion').value,
+      descripcion_proyecto: document.getElementById('e-desc').value
+    } : null,
     metadata: {
       correo_corporativo: calcEmail(name),
       timestamp: new Date().toISOString()
