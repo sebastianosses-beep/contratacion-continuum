@@ -512,7 +512,7 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
           <div class="grid-2">
             <div class="field"><label>Banco</label>
               <select id="f-bank">
-                <option>Banco Chile / Edwards / Citi</option><option>BancoEstado</option><option>Scotiabank</option><option>BCI</option><option>Banco Itaú</option><option>Banco Santander</option><option>BBVA</option><option>Banco Security</option><option>Tenpo Prepago</option><option>Global66</option><option>Otro</option>
+                <option>Banco Chile / Edwards / Citi</option><option>Banco Internacional</option><option>BancoEstado</option><option>Scotiabank</option><option>BCI</option><option>Banco Itaú</option><option>Banco BICE</option><option>Banco Santander</option><option>Banco Security</option><option>Banco Falabella</option><option>Banco Ripley</option><option>Banco Consorcio</option><option>BBVA</option><option>Tenpo Prepago</option><option>Global66</option><option>Otro</option>
               </select>
             </div>
             <div class="field"><label>Tipo de cuenta</label>
@@ -669,6 +669,33 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
         <div class="section-label" style="margin-top:20px;">Kit de bienvenida</div>
         <div class="field"><label>Talla de polera / polerón 🎁 <span style="font-weight:400; color:var(--text-3);">(te mandamos un regalo)</span></label>
           <select id="f-size"><option value="">Selecciona tu talla</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option></select>
+        </div>
+
+        <!-- DOCUMENTOS CHILE NÓMINA -->
+        <div id="wrap-docs-cl" style="display:none;">
+          <div class="section-label" style="margin-top:20px;">Documentos</div>
+          <div style="display:flex; flex-direction:column; gap:14px;">
+            <div class="field">
+              <label>Certificado de AFP</label>
+              <div style="font-size:12px; color:var(--text-3); margin-bottom:6px;">Máx. 10 MB.</div>
+              <input type="file" id="f-cl-cert-afp" accept=".pdf,.jpg,.png" style="font-size:13px; width:100%;">
+            </div>
+            <div class="field">
+              <label>Certificado de Isapre / Fonasa</label>
+              <div style="font-size:12px; color:var(--text-3); margin-bottom:6px;">Máx. 10 MB.</div>
+              <input type="file" id="f-cl-cert-salud" accept=".pdf,.jpg,.png" style="font-size:13px; width:100%;">
+            </div>
+            <div class="field">
+              <label>Foto de perfil</label>
+              <div style="font-size:12px; color:var(--text-3); margin-bottom:6px;">La usaremos en el sistema interno. Máx. 10 MB.</div>
+              <input type="file" id="f-cl-foto" accept=".jpg,.jpeg,.png" style="font-size:13px; width:100%;">
+            </div>
+            <div class="field">
+              <label>VISA de trabajo <span style="font-weight:400; color:var(--text-3);">(si aplica)</span></label>
+              <div style="font-size:12px; color:var(--text-3); margin-bottom:6px;">Solo si no eres ciudadano/a chileno/a. Máx. 10 MB.</div>
+              <input type="file" id="f-cl-visa" accept=".pdf,.jpg,.png" style="font-size:13px; width:100%;">
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1065,6 +1092,7 @@ function applyFichaVariant(contract) {
     document.getElementById('wrap-banco-pe').style.display = isPe ? 'block' : 'none';
     document.getElementById('wrap-banco-intl').style.display = isExtl ? 'block' : 'none';
     document.getElementById('wrap-prev-cl').style.display = isCl ? 'block' : 'none';
+    document.getElementById('wrap-docs-cl').style.display = isCl ? 'block' : 'none';
     document.getElementById('wrap-prev-pe').style.display = isPe ? 'block' : 'none';
     document.getElementById('wrap-familia-pe').style.display = isPe ? 'block' : 'none';
     document.getElementById('wrap-edu-pe').style.display = isPe ? 'block' : 'none';
