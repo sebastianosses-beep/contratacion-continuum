@@ -472,16 +472,41 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
         <div class="grid-2">
           <div class="field"><label>Primer apellido</label><input type="text" id="f-lastname1" placeholder="Morales" required></div>
           <div class="field"><label>Segundo apellido</label><input type="text" id="f-lastname2" placeholder="Monsalves" required></div>
-          <div class="field"><label>Ciudad</label><input type="text" id="f-city" placeholder="Santiago" required></div>
-          <div class="field"><label>Comuna</label><input type="text" id="f-comuna" placeholder="Providencia" required></div>
           <div class="field"><label>Profesión <span style="font-weight:400; color:var(--text-3);">(o último nivel de estudios)</span></label><input type="text" id="f-profession" placeholder="Ingeniero en Informática" required></div>
           <div class="field"><label>Cargas familiares (hijos)</label>
             <select id="f-cargas"><option value="0">Ninguna</option><option value="1">1</option><option value="2">2</option><option value="3 o más">3 o más</option></select>
           </div>
-          <div class="field col-span-2"><label>Dirección de residencia <span style="font-weight:400; color:var(--text-3);">(para envío de kit)</span></label><input type="text" id="f-address" placeholder="Calle, número, dpto / casa" required></div>
         </div>
 
-        <!-- BANCO LOCAL -->
+        <!-- UBICACIÓN CHILE -->
+        <div id="wrap-ubic-cl">
+          <div class="grid-2">
+            <div class="field"><label>Ciudad</label><input type="text" id="f-city" placeholder="Santiago" required></div>
+            <div class="field"><label>Comuna</label><input type="text" id="f-comuna" placeholder="Providencia" required></div>
+            <div class="field col-span-2"><label>Dirección de residencia <span style="font-weight:400; color:var(--text-3);">(para envío de kit)</span></label><input type="text" id="f-address" placeholder="Calle, número, dpto / casa" required></div>
+          </div>
+        </div>
+
+        <!-- UBICACIÓN PERÚ -->
+        <div id="wrap-ubic-pe" style="display:none;">
+          <div class="section-label" style="margin-top:16px;">Ubicación</div>
+          <div class="grid-2">
+            <div class="field"><label>Lugar de nacimiento</label><input type="text" id="f-pe-lugar-nac" placeholder="Ciudad, País"></div>
+            <div class="field"><label>Departamento</label><input type="text" id="f-pe-dpto" placeholder="Lima"></div>
+            <div class="field"><label>Provincia</label><input type="text" id="f-pe-provincia" placeholder="Lima"></div>
+            <div class="field"><label>Distrito</label><input type="text" id="f-pe-distrito" placeholder="Miraflores"></div>
+          </div>
+          <div class="section-label" style="margin-top:16px;">Domicilio actual <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:11px;">(sé lo más detallado posible)</span></div>
+          <div class="grid-2">
+            <div class="field col-span-2"><label>Dirección / Calle</label><input type="text" id="f-pe-calle" placeholder="Av. / Jr. / Calle + número + dpto"></div>
+            <div class="field"><label>Urbanización</label><input type="text" id="f-pe-urb" placeholder="Nombre de urbanización"></div>
+            <div class="field"><label>Distrito</label><input type="text" id="f-pe-dom-distrito" placeholder="Miraflores"></div>
+            <div class="field"><label>Provincia</label><input type="text" id="f-pe-dom-prov" placeholder="Lima"></div>
+            <div class="field"><label>Departamento</label><input type="text" id="f-pe-dom-dpto" placeholder="Lima"></div>
+          </div>
+        </div>
+
+        <!-- BANCO LOCAL CHILE -->
         <div id="wrap-banco-local">
           <div class="section-label" style="margin-top:20px;">Datos bancarios</div>
           <div class="grid-2">
@@ -510,6 +535,23 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
           </div>
         </div>
 
+        <!-- BANCO PERÚ -->
+        <div id="wrap-banco-pe" style="display:none;">
+          <div class="section-label" style="margin-top:20px;">Datos bancarios</div>
+          <div class="grid-2">
+            <div class="field"><label>Banco (remuneración)</label>
+              <select id="f-pe-bank"><option>BBVA</option><option>Interbank</option><option>Banco de Crédito del Perú (BCP)</option><option>Banco Falabella</option><option>Scotiabank</option><option>Global66</option><option>Otro</option></select>
+            </div>
+            <div class="field"><label>Número de cuenta</label><input type="text" id="f-pe-bank-num" placeholder="000000000"></div>
+            <div class="field col-span-2"><label>CCI (Código de Cuenta Interbancaria)</label><input type="text" id="f-pe-cci" placeholder="20 dígitos"></div>
+            <div class="field"><label>Banco CTS</label>
+              <select id="f-pe-cts-bank"><option>BANBIF</option><option>BBVA</option><option>Banco de Crédito del Perú</option><option>Banco Falabella</option><option>Banco Ripley</option><option>Caja Huancayo</option><option>Caja Municipal Cusco</option><option>Caja Municipal Piura</option><option>Caja Rural Raíz</option><option>Financiera Oh</option><option>Interbank</option><option>Scotiabank</option><option>Otro</option></select>
+            </div>
+            <div class="field"><label>Número de cuenta CTS</label><input type="text" id="f-pe-cts-num" placeholder="000000000"></div>
+            <div class="field col-span-2"><label>CCI CTS (Código Interbancario)</label><input type="text" id="f-pe-cts-cci" placeholder="20 dígitos"></div>
+          </div>
+        </div>
+
         <!-- PREVISIÓN CHILE -->
         <div id="wrap-prev-cl" style="display:none;">
           <div class="section-label" style="margin-top:20px;">Previsión</div>
@@ -525,14 +567,84 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
 
         <!-- PREVISIÓN PERÚ -->
         <div id="wrap-prev-pe" style="display:none;">
-          <div class="section-label" style="margin-top:20px;">Previsión</div>
+          <div class="section-label" style="margin-top:20px;">Sistema de pensiones y salud</div>
           <div class="grid-2">
             <div class="field"><label>AFP / ONP</label>
               <select id="f-pe-afp"><option>AFP Integra</option><option>AFP Prima</option><option>AFP Profuturo</option><option>AFP Hábitat</option><option>ONP</option></select>
             </div>
+            <div class="field"><label>Fecha de afiliación</label><input type="date" id="f-pe-afp-fecha"></div>
+            <div class="field col-span-2"><label>Número de CUSPP</label><input type="text" id="f-pe-cuspp" placeholder="Código Único del Sistema Privado de Pensiones"></div>
             <div class="field"><label>EPS / Essalud</label>
               <select id="f-pe-eps"><option>Essalud</option><option>Rímac EPS</option><option>Pacífico EPS</option><option>La Positiva</option></select>
             </div>
+          </div>
+        </div>
+
+        <!-- FAMILIARES PERÚ -->
+        <div id="wrap-familia-pe" style="display:none;">
+          <div class="section-label" style="margin-top:20px;">Datos familiares <span style="font-weight:400; text-transform:none; letter-spacing:0; font-size:11px;">(solteros: padres e hijos · emparejados: pareja e hijos)</span></div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="background:var(--bg-2); border-radius:8px; padding:12px;">
+              <div style="font-size:11px; font-weight:600; color:var(--text-3); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.06em;">Familiar 1</div>
+              <div class="grid-2">
+                <div class="field"><label>Parentesco</label><input type="text" id="f-pe-fam1-rel" placeholder="Ej: Madre, Cónyuge, Hijo/a"></div>
+                <div class="field"><label>Nombre completo</label><input type="text" id="f-pe-fam1-name" placeholder="Nombres y apellidos"></div>
+                <div class="field"><label>Fecha de nacimiento</label><input type="date" id="f-pe-fam1-bday"></div>
+                <div class="field"><label>DNI</label><input type="text" id="f-pe-fam1-dni" placeholder="00000000"></div>
+              </div>
+            </div>
+            <div style="background:var(--bg-2); border-radius:8px; padding:12px;">
+              <div style="font-size:11px; font-weight:600; color:var(--text-3); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.06em;">Familiar 2 <span style="font-weight:400;">(opcional)</span></div>
+              <div class="grid-2">
+                <div class="field"><label>Parentesco</label><input type="text" id="f-pe-fam2-rel" placeholder=""></div>
+                <div class="field"><label>Nombre completo</label><input type="text" id="f-pe-fam2-name" placeholder=""></div>
+                <div class="field"><label>Fecha de nacimiento</label><input type="date" id="f-pe-fam2-bday"></div>
+                <div class="field"><label>DNI</label><input type="text" id="f-pe-fam2-dni" placeholder="00000000"></div>
+              </div>
+            </div>
+            <div style="background:var(--bg-2); border-radius:8px; padding:12px;">
+              <div style="font-size:11px; font-weight:600; color:var(--text-3); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.06em;">Familiar 3 <span style="font-weight:400;">(opcional)</span></div>
+              <div class="grid-2">
+                <div class="field"><label>Parentesco</label><input type="text" id="f-pe-fam3-rel" placeholder=""></div>
+                <div class="field"><label>Nombre completo</label><input type="text" id="f-pe-fam3-name" placeholder=""></div>
+                <div class="field"><label>Fecha de nacimiento</label><input type="date" id="f-pe-fam3-bday"></div>
+                <div class="field"><label>DNI</label><input type="text" id="f-pe-fam3-dni" placeholder="00000000"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- EDUCACIÓN PERÚ -->
+        <div id="wrap-edu-pe" style="display:none;">
+          <div class="section-label" style="margin-top:20px;">Nivel educativo</div>
+          <div class="grid-2">
+            <div class="field"><label>Institución</label><input type="text" id="f-pe-institucion" placeholder="Universidad / Instituto"></div>
+            <div class="field"><label>Fecha de egreso</label><input type="date" id="f-pe-egreso"></div>
+          </div>
+        </div>
+
+        <!-- IMPUESTOS Y FOTO PERÚ -->
+        <div id="wrap-impuestos-pe" style="display:none;">
+          <div class="section-label" style="margin-top:20px;">Para efectos de impuestos</div>
+          <div class="field">
+            <label>¿Tuviste un empleo anterior (en planilla) en el presente año?</label>
+            <div style="font-size:12px; color:var(--text-3); margin:4px 0 8px;">Esta información se usa para calcular correctamente las retenciones de Impuesto a la Renta.</div>
+            <div style="display:flex; gap:20px;">
+              <label style="display:flex; align-items:center; gap:6px; font-weight:400; cursor:pointer;"><input type="radio" name="f-pe-prev-emp" value="si" onchange="toggleCertRetenciones()"> Sí</label>
+              <label style="display:flex; align-items:center; gap:6px; font-weight:400; cursor:pointer;"><input type="radio" name="f-pe-prev-emp" value="no" onchange="toggleCertRetenciones()" checked> No</label>
+            </div>
+          </div>
+          <div id="wrap-cert-ret" style="display:none; margin-top:12px;">
+            <div class="field">
+              <label>Certificado de Retenciones de Renta 5ta Categoría</label>
+              <div style="font-size:12px; color:var(--text-3); margin-bottom:6px;">Adjunta el certificado con clave SOL. Máx. 10 MB.</div>
+              <input type="file" id="f-pe-cert-ret" accept=".pdf,.jpg,.png" style="font-size:13px; width:100%;">
+            </div>
+          </div>
+          <div class="field" style="margin-top:16px;">
+            <label>Foto de perfil</label>
+            <div style="font-size:12px; color:var(--text-3); margin-bottom:6px;">La usaremos en el sistema interno. Máx. 10 MB.</div>
+            <input type="file" id="f-pe-foto" accept=".jpg,.jpeg,.png" style="font-size:13px; width:100%;">
           </div>
         </div>
 
@@ -947,11 +1059,22 @@ function applyFichaVariant(contract) {
   document.getElementById('wrap-natural').style.display = isEmpresa ? 'none' : 'block';
   document.getElementById('wrap-empresa').style.display = isEmpresa ? 'block' : 'none';
   if (!isEmpresa) {
-    document.getElementById('wrap-banco-local').style.display = isExtl ? 'none' : 'block';
+    document.getElementById('wrap-ubic-cl').style.display = isPe ? 'none' : 'block';
+    document.getElementById('wrap-ubic-pe').style.display = isPe ? 'block' : 'none';
+    document.getElementById('wrap-banco-local').style.display = (isExtl || isPe) ? 'none' : 'block';
+    document.getElementById('wrap-banco-pe').style.display = isPe ? 'block' : 'none';
     document.getElementById('wrap-banco-intl').style.display = isExtl ? 'block' : 'none';
     document.getElementById('wrap-prev-cl').style.display = isCl ? 'block' : 'none';
     document.getElementById('wrap-prev-pe').style.display = isPe ? 'block' : 'none';
+    document.getElementById('wrap-familia-pe').style.display = isPe ? 'block' : 'none';
+    document.getElementById('wrap-edu-pe').style.display = isPe ? 'block' : 'none';
+    document.getElementById('wrap-impuestos-pe').style.display = isPe ? 'block' : 'none';
   }
+}
+
+function toggleCertRetenciones() {
+  const si = document.querySelector('input[name="f-pe-prev-emp"]:checked')?.value === 'si';
+  document.getElementById('wrap-cert-ret').style.display = si ? 'block' : 'none';
 }
 
 function toggleLatam() {
@@ -990,7 +1113,49 @@ function submitFicha(e) {
       payload.ficha.banco_internacional = { banco: document.getElementById('f-intl-bank').value, moneda: document.getElementById('f-intl-currency').value, swift: document.getElementById('f-swift').value, cuenta: document.getElementById('f-intl-num').value };
     }
     if (contract === 'Chile-Nomina') payload.ficha.prevision = { afp: document.getElementById('f-afp').value, salud: document.getElementById('f-salud').value };
-    if (contract === 'Peru-Nomina') payload.ficha.prevision = { afp: document.getElementById('f-pe-afp').value, eps: document.getElementById('f-pe-eps').value };
+    if (contract === 'Peru-Nomina') {
+      payload.ficha.ubicacion = {
+        lugar_nacimiento: document.getElementById('f-pe-lugar-nac').value,
+        departamento: document.getElementById('f-pe-dpto').value,
+        provincia: document.getElementById('f-pe-provincia').value,
+        distrito: document.getElementById('f-pe-distrito').value,
+        domicilio: {
+          calle: document.getElementById('f-pe-calle').value,
+          urbanizacion: document.getElementById('f-pe-urb').value,
+          distrito: document.getElementById('f-pe-dom-distrito').value,
+          provincia: document.getElementById('f-pe-dom-prov').value,
+          departamento: document.getElementById('f-pe-dom-dpto').value
+        }
+      };
+      payload.ficha.banco = {
+        banco: document.getElementById('f-pe-bank').value,
+        numero: document.getElementById('f-pe-bank-num').value,
+        cci: document.getElementById('f-pe-cci').value,
+        cts_banco: document.getElementById('f-pe-cts-bank').value,
+        cts_numero: document.getElementById('f-pe-cts-num').value,
+        cts_cci: document.getElementById('f-pe-cts-cci').value
+      };
+      payload.ficha.prevision = {
+        afp: document.getElementById('f-pe-afp').value,
+        fecha_afiliacion: document.getElementById('f-pe-afp-fecha').value,
+        cuspp: document.getElementById('f-pe-cuspp').value,
+        eps: document.getElementById('f-pe-eps').value
+      };
+      payload.ficha.familiares = [1,2,3].map(n => ({
+        parentesco: document.getElementById(`f-pe-fam${n}-rel`).value,
+        nombre: document.getElementById(`f-pe-fam${n}-name`).value,
+        fecha_nacimiento: document.getElementById(`f-pe-fam${n}-bday`).value,
+        dni: document.getElementById(`f-pe-fam${n}-dni`).value
+      })).filter(f => f.nombre);
+      payload.ficha.educacion = {
+        profesion: document.getElementById('f-profession').value,
+        institucion: document.getElementById('f-pe-institucion').value,
+        fecha_egreso: document.getElementById('f-pe-egreso').value
+      };
+      payload.ficha.impuestos = {
+        empleo_anterior_planilla: document.querySelector('input[name="f-pe-prev-emp"]:checked')?.value === 'si'
+      };
+    }
   } else {
     payload.empresa = { razon_social: document.getElementById('f-co-legal').value, rut: document.getElementById('f-co-rut').value, representante: document.getElementById('f-co-rep').value, direccion: document.getElementById('f-co-address').value, personeria: document.getElementById('f-co-personeria').value };
   }
