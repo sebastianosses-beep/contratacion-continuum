@@ -17,9 +17,33 @@ const SHEETS = {
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-    const contract = data.contrato?.tipo;
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
+    // Checkpoint parcial — registra estado en tab seguimiento
+    if (data._checkpoint) {
+      let tab = ss.getSheetByName('seguimiento');
+      if (!tab) {
+        tab = ss.insertSheet('seguimiento');
+        tab.appendRow(['Timestamp','Session ID','Correo corporativo','Email personal','Nombre','Tipo contrato','Estado']);
+        tab.getRange(1, 1, 1, 7).setFontWeight('bold');
+      }
+      const r = data.recruiter || {};
+      const m = data.metadata  || {};
+      tab.appendRow([
+        new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' }),
+        v(m.session_id),
+        v(m.correo_corporativo),
+        v(r.email_personal),
+        v(r.nombre),
+        v(data.contrato?.tipo),
+        v(data._estado)
+      ]);
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, checkpoint: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const contract = data.contrato?.tipo;
     let sheetName, row;
     switch (contract) {
       case 'Chile-Nomina':

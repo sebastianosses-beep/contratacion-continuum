@@ -932,6 +932,85 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbws9z8zbF2nC0WPltsAET4u
 let payload = {};
 let currentScreen = 0;
 
+// ── Session helpers ───────────────────────────────────────────────
+const LS_KEY = 'continuum_cp';
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function saveLocal() {
+  try { localStorage.setItem(LS_KEY, JSON.stringify({ payload, screen: currentScreen })); } catch(_) {}
+}
+
+function clearLocal() {
+  try { localStorage.removeItem(LS_KEY); } catch(_) {}
+}
+
+function fireCheckpoint(estado) {
+  saveLocal();
+  if (!GAS_URL) return;
+  fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(Object.assign({}, payload, { _checkpoint: true, _estado: estado }))
+  }).catch(() => {});
+}
+
+function checkResume() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (!saved?.payload?.recruiter?.nombre || !saved?.screen) return;
+    const nombre = saved.payload.recruiter.nombre;
+    const donde = { 2: 'Propuesta', 3: 'NDA', 4: 'Ficha de ingreso' }[saved.screen] || 'paso guardado';
+    const banner = document.createElement('div');
+    banner.id = 'resume-banner';
+    banner.style.cssText = 'position:fixed;top:52px;left:0;right:0;background:#FEF3C7;border-bottom:1px solid #F59E0B;padding:10px 24px;z-index:200;display:flex;align-items:center;justify-content:space-between;font-size:13px;gap:16px;';
+    banner.innerHTML = `<span>Proceso guardado para <strong>${nombre}</strong> — quedó en <strong>${donde}</strong>.</span><div style="display:flex;gap:8px;flex-shrink:0;"><button onclick="resumeSession()" style="background:#1A1916;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;">Retomar</button><button onclick="discardSession()" style="background:none;border:1px solid #D97706;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;color:#92400E;">Descartar</button></div>`;
+    document.body.appendChild(banner);
+  } catch(_) {}
+}
+
+function resumeSession() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_KEY));
+    if (!saved) return;
+    payload = saved.payload;
+    const p = payload;
+    const contract = p.contrato.tipo;
+    const firstName = (p.recruiter.nombres || p.recruiter.nombre || '').split(' ')[0];
+    document.getElementById('em-to').textContent = p.recruiter.email_personal || '';
+    document.getElementById('em-name').textContent = firstName;
+    document.getElementById('v-name').textContent = firstName;
+    document.getElementById('v-role').textContent = `${p.rol.cargo} [${p.rol.seniority}]`;
+    document.getElementById('v-salary').textContent = `${p.contrato.sueldo_liquido} ${p.contrato.moneda}`;
+    document.getElementById('v-contract').textContent = p.contrato.label;
+    document.getElementById('v-duration-card').textContent = `Duración: ${p.contrato.duracion}`;
+    document.getElementById('v-date-card').textContent = formatDate(p.contrato.fecha_ingreso);
+    document.getElementById('v-project-card').textContent = p.rol.proyecto;
+    document.getElementById('v-desc-card').textContent = p.rol.descripcion;
+    document.getElementById('v-nda-doc').textContent = `${p.recruiter.tipo_documento} ${p.recruiter.numero_documento}`;
+    document.getElementById('w-name').textContent = firstName;
+    document.getElementById('w-date').textContent = formatDate(p.contrato.fecha_ingreso);
+    document.getElementById('w-email').textContent = p.metadata.correo_corporativo;
+    document.getElementById('w-buddy').textContent = p.rol.buddy;
+    document.getElementById('t-email').textContent = p.metadata.correo_corporativo;
+    document.getElementById('active-variant-badge').textContent = contractLabels[contract];
+    document.getElementById('f-nombres').value = p.recruiter.nombres || '';
+    document.getElementById('f-lastname1').value = p.recruiter.apellido1 || '';
+    document.getElementById('f-lastname2').value = p.recruiter.apellido2 || '';
+    applyFichaVariant(contract);
+    document.getElementById('resume-banner')?.remove();
+    goTo(saved.screen);
+  } catch(err) { console.error('Resume error:', err); }
+}
+
+function discardSession() {
+  clearLocal();
+  document.getElementById('resume-banner')?.remove();
+}
+
 const contractLabels = {
   'Chile-Nomina': 'Nómina — Chile',
   'Peru-Nomina': 'Nómina — Perú',
@@ -1093,9 +1172,11 @@ function buildPortal(e) {
     } : null,
     metadata: {
       correo_corporativo: calcEmail(rNombre + ' ' + rApellido1),
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      session_id: genId()
     }
   };
+  clearLocal();
 
   const firstName = rNombre.split(' ')[0];
   // Pre-llenar nombre/apellidos en la ficha
@@ -1180,6 +1261,7 @@ function acceptPropuesta() {
     nombre_confirmacion: document.getElementById('accept-name').value.trim(),
     timestamp: new Date().toISOString()
   };
+  fireCheckpoint('propuesta_aceptada');
   goTo(3);
 }
 
@@ -1190,6 +1272,7 @@ function signNda() {
     firma: document.getElementById('nda-sig').value.trim(),
     timestamp: new Date().toISOString()
   };
+  fireCheckpoint('nda_firmado');
   goTo(4);
 }
 
@@ -1274,11 +1357,11 @@ function submitFicha(e) {
   if (GAS_URL) {
     fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) }).catch(() => {});
   }
-
+  clearLocal();
   goTo(5);
 }
 
-window.onload = () => { updateContractFromSelects(); };
+window.onload = () => { updateContractFromSelects(); checkResume(); };
 </script>
 </body>
 </html>
