@@ -1250,7 +1250,7 @@ function submitFicha(e) {
       };
     }
   } else {
-    payload.empresa = { razon_social: document.getElementById('f-co-legal').value, rut: document.getElementById('f-co-rut').value, representante: document.getElementById('f-co-rep').value, direccion: document.getElementById('f-co-address').value, personeria: document.getElementById('f-co-personeria').value };
+    payload.empresa = Object.assign(payload.empresa || {}, { razon_social: document.getElementById('f-co-legal').value, rut: document.getElementById('f-co-rut').value, representante: document.getElementById('f-co-rep').value, direccion: document.getElementById('f-co-address').value, personeria: document.getElementById('f-co-personeria').value });
   }
   document.getElementById('json-out').textContent = JSON.stringify(payload, null, 2);
 
