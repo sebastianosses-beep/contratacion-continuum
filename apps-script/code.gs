@@ -399,8 +399,8 @@ function enviarRecordatorios() {
   });
 
   const now         = new Date();
-  const MIN_ESPERA  = 24 * 60 * 60 * 1000; // 24h antes de enviar
-  const MAX_ESPERA  = 72 * 60 * 60 * 1000; // no molestar después de 72h
+  const MIN_ESPERA  =  3 * 60 * 60 * 1000; // 3h mínimo antes de enviar
+  const MAX_ESPERA  = 48 * 60 * 60 * 1000; // no molestar después de 48h
 
   Object.entries(sessions).forEach(([sid, s]) => {
     if (!ESTADOS_INCOMPLETOS.includes(s.estado)) return;
