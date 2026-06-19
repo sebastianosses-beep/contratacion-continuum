@@ -19,6 +19,45 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
+    // Envío de email al candidato con link pre-cargado
+    if (data._action === 'send_email') {
+      const r    = data.recruiter || {};
+      const c    = data.contrato  || {};
+      const rol  = data.rol       || {};
+      const m    = data.metadata  || {};
+      const firstName = v(r.nombres || r.nombre).split(' ')[0] || 'equipo';
+      const link = v(m.portal_link);
+
+      MailApp.sendEmail({
+        to: v(r.email_personal),
+        subject: `Tu propuesta de incorporación — ${v(rol.cargo)} en Continuum`,
+        htmlBody: `
+<div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;color:#1A1916;">
+  <div style="background:#1A1916;padding:20px 32px;border-radius:8px 8px 0 0;">
+    <span style="color:#fff;font-weight:600;font-size:16px;letter-spacing:-0.01em;">Continuum</span>
+  </div>
+  <div style="background:#F7F6F3;padding:32px;border-radius:0 0 8px 8px;border:1px solid #E4E2DC;border-top:none;">
+    <h2 style="font-size:22px;margin:0 0 8px;">Hola, ${firstName}</h2>
+    <p style="color:#5C5A54;margin:0 0 24px;">Tienes una propuesta de incorporación esperándote. Revísala y completa tu proceso en unos minutos.</p>
+    <div style="background:#fff;border:1px solid #E4E2DC;border-radius:8px;padding:20px;margin-bottom:24px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <tr><td style="padding:4px 0;color:#5C5A54;width:140px;">Cargo</td><td style="padding:4px 0;font-weight:500;">${v(rol.cargo)} · ${v(rol.seniority)}</td></tr>
+        <tr><td style="padding:4px 0;color:#5C5A54;">Proyecto</td><td style="padding:4px 0;font-weight:500;">${v(rol.proyecto)}</td></tr>
+        <tr><td style="padding:4px 0;color:#5C5A54;">Modalidad</td><td style="padding:4px 0;font-weight:500;">${v(c.label)}</td></tr>
+        <tr><td style="padding:4px 0;color:#5C5A54;">Fecha de ingreso</td><td style="padding:4px 0;font-weight:500;">${v(c.fecha_ingreso)}</td></tr>
+      </table>
+    </div>
+    <a href="${link}" style="background:#1A1916;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;font-weight:500;font-size:14px;">Ver mi propuesta →</a>
+    <p style="color:#9B9890;font-size:12px;margin-top:28px;margin-bottom:0;">¿Tienes dudas? Escríbenos a <a href="mailto:people@continuumhq.com" style="color:#5C5A54;">people@continuumhq.com</a></p>
+  </div>
+</div>`
+      });
+
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, email_sent: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // Checkpoint parcial — registra estado en tab seguimiento
     if (data._checkpoint) {
       let tab = ss.getSheetByName('seguimiento');

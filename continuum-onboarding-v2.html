@@ -977,33 +977,23 @@ function resumeSession() {
     const saved = JSON.parse(localStorage.getItem(LS_KEY));
     if (!saved) return;
     payload = saved.payload;
-    const p = payload;
-    const contract = p.contrato.tipo;
-    const firstName = (p.recruiter.nombres || p.recruiter.nombre || '').split(' ')[0];
-    document.getElementById('em-to').textContent = p.recruiter.email_personal || '';
-    document.getElementById('em-name').textContent = firstName;
-    document.getElementById('v-name').textContent = firstName;
-    document.getElementById('v-role').textContent = `${p.rol.cargo} [${p.rol.seniority}]`;
-    document.getElementById('v-salary').textContent = `${p.contrato.sueldo_liquido} ${p.contrato.moneda}`;
-    document.getElementById('v-contract').textContent = p.contrato.label;
-    document.getElementById('v-duration-card').textContent = `Duración: ${p.contrato.duracion}`;
-    document.getElementById('v-date-card').textContent = formatDate(p.contrato.fecha_ingreso);
-    document.getElementById('v-project-card').textContent = p.rol.proyecto;
-    document.getElementById('v-desc-card').textContent = p.rol.descripcion;
-    document.getElementById('v-nda-doc').textContent = `${p.recruiter.tipo_documento} ${p.recruiter.numero_documento}`;
-    document.getElementById('w-name').textContent = firstName;
-    document.getElementById('w-date').textContent = formatDate(p.contrato.fecha_ingreso);
-    document.getElementById('w-email').textContent = p.metadata.correo_corporativo;
-    document.getElementById('w-buddy').textContent = p.rol.buddy;
-    document.getElementById('t-email').textContent = p.metadata.correo_corporativo;
-    document.getElementById('active-variant-badge').textContent = contractLabels[contract];
-    document.getElementById('f-nombres').value = p.recruiter.nombres || '';
-    document.getElementById('f-lastname1').value = p.recruiter.apellido1 || '';
-    document.getElementById('f-lastname2').value = p.recruiter.apellido2 || '';
-    applyFichaVariant(contract);
+    populateDisplayElements(payload);
     document.getElementById('resume-banner')?.remove();
     goTo(saved.screen);
   } catch(err) { console.error('Resume error:', err); }
+}
+
+function checkUrlSession() {
+  try {
+    const s = new URLSearchParams(location.search).get('s');
+    if (!s) return false;
+    const p = JSON.parse(decodeURIComponent(escape(atob(s))));
+    if (!p?.recruiter) return false;
+    payload = p;
+    populateDisplayElements(payload);
+    goTo(2); // candidato entra directo a la propuesta
+    return true;
+  } catch(_) { return false; }
 }
 
 function discardSession() {
@@ -1111,15 +1101,41 @@ function calcEmail(name) {
   return (parts[0]||'usuario') + '.' + (parts[1]||'continuum') + '@continuumhq.com';
 }
 
+function populateDisplayElements(p) {
+  const firstName = (p.recruiter.nombres || p.recruiter.nombre || '').split(' ')[0];
+  const contract  = p.contrato.tipo;
+  document.getElementById('em-to').textContent           = p.recruiter.email_personal || '';
+  document.getElementById('em-name').textContent         = firstName;
+  document.getElementById('v-name').textContent          = firstName;
+  document.getElementById('v-role').textContent          = `${p.rol.cargo} [${p.rol.seniority}]`;
+  document.getElementById('v-salary').textContent        = `${p.contrato.sueldo_liquido} ${p.contrato.moneda}`;
+  document.getElementById('v-contract').textContent      = p.contrato.label;
+  document.getElementById('v-duration-card').textContent = `Duración: ${p.contrato.duracion}`;
+  document.getElementById('v-date-card').textContent     = formatDate(p.contrato.fecha_ingreso);
+  document.getElementById('v-project-card').textContent  = p.rol.proyecto;
+  document.getElementById('v-desc-card').textContent     = p.rol.descripcion;
+  document.getElementById('v-nda-doc').textContent       = `${p.recruiter.tipo_documento} ${p.recruiter.numero_documento}`;
+  document.getElementById('w-name').textContent          = firstName;
+  document.getElementById('w-date').textContent          = formatDate(p.contrato.fecha_ingreso);
+  document.getElementById('w-email').textContent         = p.metadata.correo_corporativo;
+  document.getElementById('w-buddy').textContent         = p.rol.buddy;
+  document.getElementById('t-email').textContent         = p.metadata.correo_corporativo;
+  document.getElementById('active-variant-badge').textContent = contractLabels[contract];
+  document.getElementById('f-nombres').value   = p.recruiter.nombres  || '';
+  document.getElementById('f-lastname1').value = p.recruiter.apellido1 || '';
+  document.getElementById('f-lastname2').value = p.recruiter.apellido2 || '';
+  applyFichaVariant(contract);
+}
+
 function buildPortal(e) {
   e.preventDefault();
-  const contract = document.getElementById('r-contract').value;
-  const rNombre   = document.getElementById('r-nombre').value.trim();
+  const contract   = document.getElementById('r-contract').value;
+  const rNombre    = document.getElementById('r-nombre').value.trim();
   const rApellido1 = document.getElementById('r-apellido1').value.trim();
   const rApellido2 = document.getElementById('r-apellido2').value.trim();
-  const name = `${rNombre} ${rApellido1} ${rApellido2}`.trim();
-  const date = document.getElementById('r-date').value;
-  const email = document.getElementById('r-email').value;
+  const name       = `${rNombre} ${rApellido1} ${rApellido2}`.trim();
+  const date       = document.getElementById('r-date').value;
+  const email      = document.getElementById('r-email').value;
 
   payload = {
     recruiter: {
@@ -1176,33 +1192,24 @@ function buildPortal(e) {
       session_id: genId()
     }
   };
-  clearLocal();
 
-  const firstName = rNombre.split(' ')[0];
-  // Pre-llenar nombre/apellidos en la ficha
-  document.getElementById('f-nombres').value = rNombre;
-  document.getElementById('f-lastname1').value = rApellido1;
-  document.getElementById('f-lastname2').value = rApellido2;
-  document.getElementById('em-to').textContent = email;
-  document.getElementById('em-name').textContent = firstName;
-  document.getElementById('v-name').textContent = firstName;
-  document.getElementById('v-role').textContent = `${payload.rol.cargo} [${payload.rol.seniority}]`;
-  document.getElementById('v-salary').textContent = `${payload.contrato.sueldo_liquido} ${payload.contrato.moneda}`;
-  document.getElementById('v-contract').textContent = payload.contrato.label;
-  document.getElementById('v-duration-card').textContent = `Duración: ${payload.contrato.duracion}`;
-  document.getElementById('v-date-card').textContent = formatDate(date);
-  document.getElementById('v-project-card').textContent = payload.rol.proyecto;
-  document.getElementById('v-desc-card').textContent = payload.rol.descripcion;
-  document.getElementById('v-nda-doc').textContent = `${payload.recruiter.tipo_documento} ${payload.recruiter.numero_documento}`;
-  document.getElementById('w-name').textContent = firstName;
-  document.getElementById('w-date').textContent = formatDate(date);
-  document.getElementById('w-email').textContent = payload.metadata.correo_corporativo;
-  document.getElementById('w-buddy').textContent = payload.rol.buddy;
-  document.getElementById('t-email').textContent = payload.metadata.correo_corporativo;
-  document.getElementById('active-variant-badge').textContent = contractLabels[contract];
+  // Generar link pre-cargado para el candidato
+  const encoded   = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+  const portalLink = location.origin + location.pathname + '?s=' + encoded;
+  payload.metadata.portal_link = portalLink;
+
+  clearLocal();
+  populateDisplayElements(payload);
   document.getElementById('json-out').textContent = JSON.stringify(payload, null, 2);
 
-  applyFichaVariant(contract);
+  // Disparar envío de email
+  if (GAS_URL) {
+    fetch(GAS_URL, {
+      method: 'POST',
+      body: JSON.stringify(Object.assign({}, payload, { _action: 'send_email' }))
+    }).catch(() => {});
+  }
+
   goTo(1);
 }
 
@@ -1361,7 +1368,7 @@ function submitFicha(e) {
   goTo(5);
 }
 
-window.onload = () => { updateContractFromSelects(); checkResume(); };
+window.onload = () => { updateContractFromSelects(); if (!checkUrlSession()) checkResume(); };
 </script>
 </body>
 </html>
