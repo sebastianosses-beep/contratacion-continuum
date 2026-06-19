@@ -63,19 +63,20 @@ function doPost(e) {
       let tab = ss.getSheetByName('seguimiento');
       if (!tab) {
         tab = ss.insertSheet('seguimiento');
-        tab.appendRow(['Timestamp','Session ID','Correo corporativo','Email personal','Nombre','Tipo contrato','Estado']);
-        tab.getRange(1, 1, 1, 7).setFontWeight('bold');
+        tab.appendRow(['Timestamp','Session ID','Correo corporativo','Email personal','Nombre','Tipo contrato','Estado','Portal Link']);
+        tab.getRange(1, 1, 1, 8).setFontWeight('bold');
       }
       const r = data.recruiter || {};
       const m = data.metadata  || {};
       tab.appendRow([
-        new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' }),
+        new Date(),
         v(m.session_id),
         v(m.correo_corporativo),
         v(r.email_personal),
         v(r.nombre),
         v(data.contrato?.tipo),
-        v(data._estado)
+        v(data._estado),
+        v(m.portal_link)
       ]);
       return ContentService
         .createTextOutput(JSON.stringify({ ok: true, checkpoint: true }))
@@ -368,6 +369,69 @@ function rowEmpresa(d) {
     v(c.costo_empresa_usd),
     ...firmasCols(d),
   ];
+}
+
+// ————————————————————————————
+// Recordatorio automático — se ejecuta diariamente vía trigger
+// ————————————————————————————
+function enviarRecordatorios() {
+  const ss  = SpreadsheetApp.getActiveSpreadsheet();
+  const tab = ss.getSheetByName('seguimiento');
+  if (!tab || tab.getLastRow() < 2) return;
+
+  const rows = tab.getDataRange().getValues().slice(1); // sin header
+  const ESTADOS_INCOMPLETOS = ['iniciado', 'propuesta_aceptada', 'nda_firmado'];
+  const DONDE = {
+    iniciado:           'revisar y aceptar tu propuesta de incorporación',
+    propuesta_aceptada: 'firmar el NDA',
+    nda_firmado:        'completar tu ficha de ingreso'
+  };
+
+  // Por session_id, quedarse con el estado más reciente
+  const sessions = {};
+  rows.forEach(row => {
+    const sid = String(row[1] || '');
+    if (!sid) return;
+    const ts = new Date(row[0]);
+    if (!sessions[sid] || ts > sessions[sid].ts) {
+      sessions[sid] = { ts, email: row[3], nombre: row[4], estado: row[6], link: row[7] };
+    }
+  });
+
+  const now         = new Date();
+  const MIN_ESPERA  = 24 * 60 * 60 * 1000; // 24h antes de enviar
+  const MAX_ESPERA  = 72 * 60 * 60 * 1000; // no molestar después de 72h
+
+  Object.entries(sessions).forEach(([sid, s]) => {
+    if (!ESTADOS_INCOMPLETOS.includes(s.estado)) return;
+    if (!s.email || !s.link) return;
+    const diff = now - s.ts;
+    if (diff < MIN_ESPERA || diff > MAX_ESPERA) return;
+
+    const firstName = String(s.nombre || '').split(' ')[0] || 'candidato';
+    const donde     = DONDE[s.estado] || 'completar tu proceso';
+
+    MailApp.sendEmail({
+      to: s.email,
+      subject: 'Recordatorio: completa tu proceso de incorporación en Continuum',
+      htmlBody: `
+<div style="font-family:Inter,sans-serif;max-width:560px;margin:0 auto;color:#1A1916;">
+  <div style="background:#1A1916;padding:20px 32px;border-radius:8px 8px 0 0;">
+    <span style="color:#fff;font-weight:600;font-size:16px;letter-spacing:-0.01em;">Continuum</span>
+  </div>
+  <div style="background:#F7F6F3;padding:32px;border-radius:0 0 8px 8px;border:1px solid #E4E2DC;border-top:none;">
+    <h2 style="font-size:22px;margin:0 0 8px;">Hola, ${firstName}</h2>
+    <p style="color:#5C5A54;margin:0 0 24px;">Quedaste a un paso de completar tu incorporación en Continuum. Solo te falta <strong>${donde}</strong> — toma menos de 5 minutos.</p>
+    <a href="${s.link}" style="background:#1A1916;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;display:inline-block;font-weight:500;font-size:14px;">Continuar mi proceso →</a>
+    <p style="color:#9B9890;font-size:12px;margin-top:28px;margin-bottom:0;">¿Tienes dudas? Escríbenos a <a href="mailto:people@continuumhq.com" style="color:#5C5A54;">people@continuumhq.com</a></p>
+  </div>
+</div>`
+    });
+
+    // Marcar como recordatorio enviado para no volver a enviar
+    tab.appendRow([new Date(), sid, '', s.email, s.nombre, '', 'recordatorio_enviado', s.link]);
+    Logger.log('Recordatorio enviado a ' + s.email);
+  });
 }
 
 // ————————————————————————————
