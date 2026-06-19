@@ -1255,7 +1255,9 @@ function submitFicha(e) {
   document.getElementById('json-out').textContent = JSON.stringify(payload, null, 2);
 
   if (GAS_URL) {
-    fetch(GAS_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) }).catch(() => {});
+    fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) })
+      .then(r => console.log('GAS status:', r.status))
+      .catch(err => console.error('GAS error:', err));
   }
 
   goTo(5);
