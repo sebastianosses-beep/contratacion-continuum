@@ -215,9 +215,11 @@
 
       <div class="section-label">Candidato</div>
       <div class="grid-2">
-        <div class="field"><label>Nombre completo</label><input type="text" id="r-name" value="Francisco Morales Monsalves" required></div>
+        <div class="field col-span-2"><label>Nombre(s)</label><input type="text" id="r-nombre" placeholder="Francisco Andrés" required></div>
+        <div class="field"><label>Primer apellido</label><input type="text" id="r-apellido1" placeholder="Morales" required></div>
+        <div class="field"><label>Segundo apellido</label><input type="text" id="r-apellido2" placeholder="Monsalves" required></div>
         <div class="field"><label>Email personal</label><input type="email" id="r-email" value="morales.monsalves.francisco@gmail.com" required></div>
-        <div class="field col-span-2"><label>Teléfono WhatsApp</label><input type="text" id="r-phone" value="+56 9 4900 3532"></div>
+        <div class="field"><label>Teléfono WhatsApp</label><input type="text" id="r-phone" value="+56 9 4900 3532"></div>
       </div>
 
       <div class="section-label" style="margin-top:20px;">Identidad (para NDA y LATAM)</div>
@@ -1033,13 +1035,19 @@ function calcEmail(name) {
 function buildPortal(e) {
   e.preventDefault();
   const contract = document.getElementById('r-contract').value;
-  const name = document.getElementById('r-name').value;
+  const rNombre   = document.getElementById('r-nombre').value.trim();
+  const rApellido1 = document.getElementById('r-apellido1').value.trim();
+  const rApellido2 = document.getElementById('r-apellido2').value.trim();
+  const name = `${rNombre} ${rApellido1} ${rApellido2}`.trim();
   const date = document.getElementById('r-date').value;
   const email = document.getElementById('r-email').value;
 
   payload = {
     recruiter: {
       nombre: name,
+      nombres: rNombre,
+      apellido1: rApellido1,
+      apellido2: rApellido2,
       email_personal: email,
       whatsapp: document.getElementById('r-phone').value,
       tipo_documento: document.getElementById('r-doc-type').value,
@@ -1084,12 +1092,16 @@ function buildPortal(e) {
       descripcion_proyecto: document.getElementById('e-desc').value
     } : null,
     metadata: {
-      correo_corporativo: calcEmail(name),
+      correo_corporativo: calcEmail(rNombre + ' ' + rApellido1),
       timestamp: new Date().toISOString()
     }
   };
 
-  const firstName = name.split(' ')[0];
+  const firstName = rNombre.split(' ')[0];
+  // Pre-llenar nombre/apellidos en la ficha
+  document.getElementById('f-nombres').value = rNombre;
+  document.getElementById('f-lastname1').value = rApellido1;
+  document.getElementById('f-lastname2').value = rApellido2;
   document.getElementById('em-to').textContent = email;
   document.getElementById('em-name').textContent = firstName;
   document.getElementById('v-name').textContent = firstName;
