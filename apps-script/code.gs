@@ -113,6 +113,12 @@ function doPost(e) {
     if (!sheet) throw new Error('Pestaña no encontrada: ' + sheetName);
     sheet.appendRow(row);
 
+    // PandaDoc — solo para contratos Perú e Internacional
+    const pandaContracts = ['Peru-Nomina','Peru-Honorarios','Peru-Empresa','Internacional-Servicios'];
+    if (pandaContracts.includes(contract)) {
+      try { enviarContratoPandaDoc(data); } catch(pe) { Logger.log('PandaDoc error: ' + pe.message); }
+    }
+
     return ContentService
       .createTextOutput(JSON.stringify({ ok: true, sheet: sheetName }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -432,6 +438,72 @@ function enviarRecordatorios() {
     tab.appendRow([new Date(), sid, '', s.email, s.nombre, '', 'recordatorio_enviado', s.link]);
     Logger.log('Recordatorio enviado a ' + s.email);
   });
+}
+
+// ————————————————————————————
+// PandaDoc — genera contrato y envía a firma (Perú / Internacional)
+// ————————————————————————————
+function enviarContratoPandaDoc(data) {
+  const PANDADOC_API_KEY  = PropertiesService.getScriptProperties().getProperty('PANDADOC_API_KEY');
+  const TEMPLATE_ID       = 'gWLdyf3ERaWCetL9wAtg2b';
+  const r   = data.recruiter || {};
+  const c   = data.contrato  || {};
+  const rol = data.rol       || {};
+  const f   = data.ficha     || {};
+
+  const firstName = v(f.nombres || r.nombres || r.nombre).split(' ')[0];
+  const lastName  = [v(f.apellidos?.primero || r.apellido1), v(f.apellidos?.segundo || r.apellido2)].filter(Boolean).join(' ');
+  const email     = v(r.email_personal);
+
+  const body = {
+    name:          `Contrato — ${firstName} ${lastName} — ${v(rol.cargo)}`,
+    template_uuid: TEMPLATE_ID,
+    recipients: [{
+      email:      email,
+      first_name: firstName,
+      last_name:  lastName,
+      role:       'Candidate'
+    }],
+    fields: {
+      'Candidate.FirstName': { value: firstName },
+      'Candidate.LastName':  { value: lastName },
+      'Recruiter.Company':   { value: 'Continuum' },
+      'Job Title':           { value: v(rol.cargo) + ' · ' + v(rol.seniority) },
+      'Salary':              { value: v(c.sueldo_liquido) },
+      'CurrencyType':        { value: v(c.moneda) },
+      'Start Date':          { value: v(c.fecha_ingreso) }
+    },
+    metadata: { session_id: v(data.metadata?.session_id) }
+  };
+
+  const response = UrlFetchApp.fetch('https://api.pandadoc.com/public/v1/documents', {
+    method:  'post',
+    headers: {
+      'Authorization': 'API-Key ' + PANDADOC_API_KEY,
+      'Content-Type':  'application/json'
+    },
+    payload:              JSON.stringify(body),
+    muteHttpExceptions:   true
+  });
+
+  const result = JSON.parse(response.getContentText());
+  Logger.log('PandaDoc documento creado: ' + JSON.stringify(result));
+
+  if (!result.id) throw new Error('PandaDoc no retornó id: ' + response.getContentText());
+
+  // Esperar a que el documento esté listo y enviarlo a firma
+  Utilities.sleep(3000);
+  const sendResp = UrlFetchApp.fetch(`https://api.pandadoc.com/public/v1/documents/${result.id}/send`, {
+    method:  'post',
+    headers: {
+      'Authorization': 'API-Key ' + PANDADOC_API_KEY,
+      'Content-Type':  'application/json'
+    },
+    payload:            JSON.stringify({ message: `Hola ${firstName}, aquí está tu contrato para revisar y firmar.`, silent: false }),
+    muteHttpExceptions: true
+  });
+
+  Logger.log('PandaDoc enviado a firma: ' + sendResp.getContentText());
 }
 
 // ————————————————————————————
