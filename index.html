@@ -470,6 +470,7 @@ Gestionar APIs con Apigee con contratos claros.</textarea>
       <div id="wrap-natural">
         <div class="section-label">Datos personales</div>
         <div class="grid-2">
+          <div class="field col-span-2"><label>Nombre(s) <span style="font-weight:400; color:var(--text-3);">(solo tus nombres, sin apellidos)</span></label><input type="text" id="f-nombres" placeholder="Francisco Andrés" required></div>
           <div class="field"><label>Primer apellido</label><input type="text" id="f-lastname1" placeholder="Morales" required></div>
           <div class="field"><label>Segundo apellido</label><input type="text" id="f-lastname2" placeholder="Monsalves" required></div>
           <div class="field"><label>Profesión <span style="font-weight:400; color:var(--text-3);">(o último nivel de estudios)</span></label><input type="text" id="f-profession" placeholder="Ingeniero en Informática" required></div>
@@ -1124,8 +1125,9 @@ function applyFichaVariant(contract) {
     document.getElementById('wrap-ubic-cl').style.display = (!isPe && !isExtl) ? 'block' : 'none';
     document.getElementById('wrap-ubic-pe').style.display = isPe ? 'block' : 'none';
     document.getElementById('wrap-ubic-intl').style.display = isExtl ? 'block' : 'none';
-    document.getElementById('wrap-banco-local').style.display = (isExtl || isPe) ? 'none' : 'block';
-    document.getElementById('wrap-banco-pe').style.display = isPe ? 'block' : 'none';
+    const isPeBanco = contract === 'Peru-Nomina' || contract === 'Peru-Honorarios';
+    document.getElementById('wrap-banco-local').style.display = (isExtl || isPeBanco) ? 'none' : 'block';
+    document.getElementById('wrap-banco-pe').style.display = isPeBanco ? 'block' : 'none';
     document.getElementById('wrap-banco-intl').style.display = isExtl ? 'block' : 'none';
     document.getElementById('wrap-prev-cl').style.display = isCl ? 'block' : 'none';
     document.getElementById('wrap-docs-cl').style.display = isCl ? 'block' : 'none';
@@ -1184,6 +1186,7 @@ function submitFicha(e) {
   const contract = document.getElementById('r-contract').value;
   if (!contract.endsWith('Empresa')) {
     payload.ficha = {
+      nombres: document.getElementById('f-nombres').value,
       apellidos: { primero: document.getElementById('f-lastname1').value, segundo: document.getElementById('f-lastname2').value },
       ubicacion: { ciudad: document.getElementById('f-city').value, comuna: document.getElementById('f-comuna').value, direccion: document.getElementById('f-address').value },
       profesion: document.getElementById('f-profession').value,
@@ -1192,10 +1195,12 @@ function submitFicha(e) {
       medico: { sangre: document.getElementById('f-blood').value, alergias: document.getElementById('f-allergies').value, condicion: document.getElementById('f-condition').value },
       talla: document.getElementById('f-size').value
     };
-    if (contract !== 'Internacional-Servicios') {
-      payload.ficha.banco = { banco: document.getElementById('f-bank').value, tipo: document.getElementById('f-bank-type').value, numero: document.getElementById('f-bank-num').value };
-    } else {
+    if (contract === 'Internacional-Servicios') {
       payload.ficha.banco_internacional = { banco: document.getElementById('f-intl-bank').value, moneda: document.getElementById('f-intl-currency').value, swift: document.getElementById('f-swift').value, cuenta: document.getElementById('f-intl-num').value };
+    } else if (contract === 'Peru-Nomina' || contract === 'Peru-Honorarios') {
+      payload.ficha.banco = { banco: document.getElementById('f-pe-bank').value, numero: document.getElementById('f-pe-bank-num').value, cci: document.getElementById('f-pe-cci').value, cts_banco: document.getElementById('f-pe-cts-bank').value, cts_numero: document.getElementById('f-pe-cts-num').value, cts_cci: document.getElementById('f-pe-cts-cci').value };
+    } else {
+      payload.ficha.banco = { banco: document.getElementById('f-bank').value, tipo: document.getElementById('f-bank-type').value, numero: document.getElementById('f-bank-num').value };
     }
     if (contract === 'Chile-Nomina') payload.ficha.prevision = { afp: document.getElementById('f-afp').value, salud: document.getElementById('f-salud').value };
     if (contract === 'Peru-Nomina') {
