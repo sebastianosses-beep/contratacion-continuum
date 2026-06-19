@@ -114,7 +114,7 @@ function doPost(e) {
     sheet.appendRow(row);
 
     // PandaDoc — solo para contratos Perú e Internacional
-    const pandaContracts = ['Peru-Nomina','Peru-Honorarios','Peru-Empresa','Internacional-Servicios'];
+    const pandaContracts = ['Chile-Nomina','Peru-Nomina','Peru-Honorarios','Peru-Empresa','Internacional-Servicios']; // Chile-Nomina temporal para test, luego va a Talana
     if (pandaContracts.includes(contract)) {
       try { enviarContratoPandaDoc(data); } catch(pe) { Logger.log('PandaDoc error: ' + pe.message); }
     }
@@ -464,15 +464,13 @@ function enviarContratoPandaDoc(data) {
       last_name:  lastName,
       role:       'Candidate'
     }],
-    fields: {
-      'Candidate.FirstName': { value: firstName },
-      'Candidate.LastName':  { value: lastName },
-      'Recruiter.Company':   { value: 'Continuum' },
-      'Job Title':           { value: v(rol.cargo) + ' · ' + v(rol.seniority) },
-      'Salary':              { value: v(c.sueldo_liquido) },
-      'CurrencyType':        { value: v(c.moneda) },
-      'Start Date':          { value: v(c.fecha_ingreso) }
-    },
+    tokens: [
+      { name: 'Recruiter.Company', value: 'Continuum' },
+      { name: 'Job Title',         value: v(rol.cargo) + ' · ' + v(rol.seniority) },
+      { name: 'Salary',            value: v(c.sueldo_liquido) },
+      { name: 'CurrencyType',      value: v(c.moneda) },
+      { name: 'Start Date',        value: v(c.fecha_ingreso) }
+    ],
     metadata: { session_id: v(data.metadata?.session_id) }
   };
 
@@ -491,8 +489,21 @@ function enviarContratoPandaDoc(data) {
 
   if (!result.id) throw new Error('PandaDoc no retornó id: ' + response.getContentText());
 
-  // Esperar a que el documento esté listo y enviarlo a firma
-  Utilities.sleep(3000);
+  // Polling hasta que el documento esté en draft (máx 30s)
+  let ready = false;
+  for (let i = 0; i < 10; i++) {
+    Utilities.sleep(3000);
+    const statusResp = UrlFetchApp.fetch(`https://api.pandadoc.com/public/v1/documents/${result.id}`, {
+      headers: { 'Authorization': 'API-Key ' + PANDADOC_API_KEY },
+      muteHttpExceptions: true
+    });
+    const statusData = JSON.parse(statusResp.getContentText());
+    Logger.log('PandaDoc status poll: ' + statusData.status);
+    if (statusData.status === 'document.draft') { ready = true; break; }
+  }
+
+  if (!ready) throw new Error('PandaDoc: documento no llegó a draft después de 30s');
+
   const sendResp = UrlFetchApp.fetch(`https://api.pandadoc.com/public/v1/documents/${result.id}/send`, {
     method:  'post',
     headers: {
@@ -504,6 +515,21 @@ function enviarContratoPandaDoc(data) {
   });
 
   Logger.log('PandaDoc enviado a firma: ' + sendResp.getContentText());
+}
+
+// ————————————————————————————
+// Test directo PandaDoc desde el editor
+// ————————————————————————————
+function testPandaDoc() {
+  const data = {
+    recruiter: { nombres: 'Francisco', apellido1: 'Morales', apellido2: 'Monsalves', email_personal: 'sebastian.osses@continuumhq.com' },
+    contrato:  { tipo: 'Peru-Nomina', sueldo_liquido: '3000', moneda: 'PEN', fecha_ingreso: '2026-07-01' },
+    rol:       { cargo: 'Software Engineer', seniority: 'Senior', proyecto: 'Proyecto Test' },
+    ficha:     { nombres: 'Francisco', apellidos: { primero: 'Morales', segundo: 'Monsalves' } },
+    metadata:  { session_id: 'test-123' }
+  };
+  enviarContratoPandaDoc(data);
+  Logger.log('testPandaDoc completado');
 }
 
 // ————————————————————————————
