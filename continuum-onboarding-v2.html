@@ -1222,9 +1222,15 @@ function applyFichaVariant(contract) {
   document.getElementById('wrap-natural').style.display = isEmpresa ? 'none' : 'block';
   document.getElementById('wrap-empresa').style.display = isEmpresa ? 'block' : 'none';
   if (!isEmpresa) {
-    document.getElementById('wrap-ubic-cl').style.display = (!isPe && !isExtl) ? 'block' : 'none';
+    const showCl = !isPe && !isExtl;
+    document.getElementById('wrap-ubic-cl').style.display = showCl ? 'block' : 'none';
     document.getElementById('wrap-ubic-pe').style.display = isPe ? 'block' : 'none';
     document.getElementById('wrap-ubic-intl').style.display = isExtl ? 'block' : 'none';
+    // Quitar required de campos ocultos para no bloquear el submit
+    ['f-city','f-comuna','f-address'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.required = showCl;
+    });
     const isPeBanco = contract === 'Peru-Nomina' || contract === 'Peru-Honorarios';
     document.getElementById('wrap-banco-local').style.display = (isExtl || isPeBanco) ? 'none' : 'block';
     document.getElementById('wrap-banco-pe').style.display = isPeBanco ? 'block' : 'none';
