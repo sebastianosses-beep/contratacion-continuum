@@ -14,10 +14,18 @@ const SHEETS = {
   EMPRESA:     'empresa_juridica'
 };
 
+function dbgLog(ss, msg) {
+  try {
+    const t = ss.getSheetByName('_debug') || ss.insertSheet('_debug');
+    t.appendRow([new Date(), msg]);
+  } catch(_) {}
+}
+
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
+    dbgLog(ss, 'doPost | tipo=' + data.contrato?.tipo + ' | _action=' + data._action + ' | _checkpoint=' + data._checkpoint);
 
     // Envío de email al candidato con link pre-cargado
     if (data._action === 'send_email') {
@@ -113,10 +121,21 @@ function doPost(e) {
     if (!sheet) throw new Error('Pestaña no encontrada: ' + sheetName);
     sheet.appendRow(row);
 
-    // PandaDoc — solo para contratos Perú e Internacional
-    const pandaContracts = ['Chile-Nomina','Peru-Nomina','Peru-Honorarios','Peru-Empresa','Internacional-Servicios']; // Chile-Nomina temporal para test, luego va a Talana
+    // PandaDoc — genera y firma el documento del contrato (todos los tipos, incluido Chile-Nómina)
+    const pandaContracts = ['Chile-Nomina','Peru-Nomina','Peru-Honorarios','Peru-Empresa','Internacional-Servicios'];
     if (pandaContracts.includes(contract)) {
-      try { enviarContratoPandaDoc(data); } catch(pe) { Logger.log('PandaDoc error: ' + pe.message); }
+      dbgLog(ss, 'PandaDoc: disparando para ' + contract);
+      try { enviarContratoPandaDoc(data); } catch(pe) { dbgLog(ss, 'PandaDoc ERROR: ' + pe.message); }
+    } else {
+      dbgLog(ss, 'PandaDoc: contrato no en lista (' + contract + ')');
+    }
+
+    // Talana — crea la ficha del trabajador (Persona + Contrato) en paralelo, solo Chile-Nómina.
+    // No genera ni firma documentos — eso lo hace PandaDoc arriba. Si Talana falla, no bloquea
+    // el flujo del candidato (queda registrado en _debug para revisión manual).
+    if (contract === 'Chile-Nomina') {
+      dbgLog(ss, 'Talana: disparando creación de ficha para ' + contract);
+      try { enviarContratoTalana(data); } catch(te) { dbgLog(ss, 'Talana ERROR: ' + te.message); }
     }
 
     return ContentService
@@ -135,6 +154,70 @@ function doPost(e) {
 // ————————————————————————————
 const ts  = () => new Date().toLocaleString('es-CL', { timeZone: 'America/Santiago' });
 const v   = (x) => (x !== null && x !== undefined) ? String(x) : '';
+
+// Reconstruye el RUT en formato "NNNNNNNN-N" sin importar puntos, guion o espacios en el input
+function normalizarRut(rut) {
+  const limpio = v(rut).replace(/[^0-9kK]/g, '');
+  if (limpio.length < 2) return limpio;
+  const cuerpo = limpio.slice(0, -1);
+  const verificador = limpio.slice(-1).toUpperCase();
+  return cuerpo + '-' + verificador;
+}
+
+// Convierte un número entero a su representación en palabras (español)
+function numeroAPalabras(num) {
+  const n = parseInt(String(num).replace(/[^\d]/g, ''), 10);
+  if (!n || isNaN(n)) return '';
+
+  const UNIDADES = ['', 'uno', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve'];
+  const DECENAS  = ['', 'diez', 'veinte', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+  const ESPECIALES = {
+    11: 'once', 12: 'doce', 13: 'trece', 14: 'catorce', 15: 'quince',
+    16: 'dieciséis', 17: 'diecisiete', 18: 'dieciocho', 19: 'diecinueve',
+    21: 'veintiuno', 22: 'veintidós', 23: 'veintitrés', 24: 'veinticuatro',
+    25: 'veinticinco', 26: 'veintiséis', 27: 'veintisiete', 28: 'veintiocho', 29: 'veintinueve'
+  };
+  const CENTENAS = ['', 'ciento', 'doscientos', 'trescientos', 'cuatrocientos', 'quinientos', 'seiscientos', 'setecientos', 'ochocientos', 'novecientos'];
+
+  function tresDigitos(num3) {
+    if (num3 === 0) return '';
+    if (num3 === 100) return 'cien';
+    if (ESPECIALES[num3]) return ESPECIALES[num3];
+    const c = Math.floor(num3 / 100);
+    const resto = num3 % 100;
+    let str = CENTENAS[c];
+    if (resto) {
+      if (ESPECIALES[resto]) {
+        str += (str ? ' ' : '') + ESPECIALES[resto];
+      } else {
+        const d = Math.floor(resto / 10);
+        const u = resto % 10;
+        const du = d ? (DECENAS[d] + (u ? ' y ' + UNIDADES[u] : '')) : UNIDADES[u];
+        str += (str ? ' ' : '') + du;
+      }
+    }
+    return str;
+  }
+
+  function grupo(num3, singular, plural) {
+    if (num3 === 0) return '';
+    if (num3 === 1) return singular;
+    return tresDigitos(num3) + ' ' + plural;
+  }
+
+  if (n === 0) return 'cero pesos';
+
+  const millones = Math.floor(n / 1000000);
+  const miles    = Math.floor((n % 1000000) / 1000);
+  const resto    = n % 1000;
+
+  let partes = [];
+  if (millones) partes.push(grupo(millones, 'un millón', 'millones'));
+  if (miles)    partes.push((miles === 1 ? 'mil' : tresDigitos(miles) + ' mil'));
+  if (resto)    partes.push(tresDigitos(resto));
+
+  return partes.join(' ').trim() + ' pesos';
+}
 
 function firmasCols(d) {
   const f = d.firmas || {};
@@ -444,8 +527,9 @@ function enviarRecordatorios() {
 // PandaDoc — genera contrato y envía a firma (Perú / Internacional)
 // ————————————————————————————
 function enviarContratoPandaDoc(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   const PANDADOC_API_KEY  = PropertiesService.getScriptProperties().getProperty('PANDADOC_API_KEY');
-  const TEMPLATE_ID       = 'gWLdyf3ERaWCetL9wAtg2b';
+  const TEMPLATE_ID       = 'nyeZBmKQXnWYF4xPr55b6F'; // Plantilla Contrato Nómina Chile v1 (Trabajador.*/Contrato.*, roles Signer/Recruiter)
   const r   = data.recruiter || {};
   const c   = data.contrato  || {};
   const rol = data.rol       || {};
@@ -455,21 +539,35 @@ function enviarContratoPandaDoc(data) {
   const lastName  = [v(f.apellidos?.primero || r.apellido1), v(f.apellidos?.segundo || r.apellido2)].filter(Boolean).join(' ');
   const email     = v(r.email_personal);
 
+  const ub = f.ubicacion || {};
+  const domicilio = [v(ub.direccion), v(ub.comuna), v(ub.ciudad)].filter(Boolean).join(', ');
+  const fechaContrato = Utilities.formatDate(new Date(), 'America/Santiago', "d 'de' MMMM 'de' yyyy");
+
   const body = {
     name:          `Contrato — ${firstName} ${lastName} — ${v(rol.cargo)}`,
     template_uuid: TEMPLATE_ID,
-    recipients: [{
-      email:      email,
-      first_name: firstName,
-      last_name:  lastName,
-      role:       'Candidate'
-    }],
+    recipients: [
+      {
+        email:      email,
+        first_name: firstName,
+        last_name:  lastName,
+        role:       'Trabajador'
+      }
+    ],
     tokens: [
-      { name: 'Recruiter.Company', value: 'Continuum' },
-      { name: 'Job Title',         value: v(rol.cargo) + ' · ' + v(rol.seniority) },
-      { name: 'Salary',            value: v(c.sueldo_liquido) },
-      { name: 'CurrencyType',      value: v(c.moneda) },
-      { name: 'Start Date',        value: v(c.fecha_ingreso) }
+      { name: 'Contrato.Fecha',              value: fechaContrato },
+      { name: 'Trabajador.NombreCompleto',   value: `${firstName} ${lastName}` },
+      { name: 'Trabajador.RUT',              value: v(r.numero_documento) },
+      { name: 'Trabajador.Nacionalidad',     value: v(r.nacionalidad) },
+      { name: 'Trabajador.FechaNacimiento',  value: v(r.fecha_nacimiento) },
+      { name: 'Trabajador.EstadoCivil',      value: v(r.estado_civil) },
+      { name: 'Trabajador.Email',            value: email },
+      { name: 'Trabajador.Domicilio',        value: domicilio },
+      { name: 'Contrato.Cargo',              value: v(rol.cargo) + ' ' + v(rol.seniority) },
+      { name: 'Contrato.FuncionesEspecificas', value: v(rol.descripcion) },
+      { name: 'Contrato.SueldoBase',         value: v(c.sueldo_liquido) + ' ' + v(c.moneda) },
+      { name: 'Contrato.SueldoEnPalabras',   value: numeroAPalabras(c.sueldo_liquido) },
+      { name: 'Contrato.FechaIngreso',       value: v(c.fecha_ingreso) }
     ],
     metadata: { session_id: v(data.metadata?.session_id) }
   };
@@ -485,12 +583,13 @@ function enviarContratoPandaDoc(data) {
   });
 
   const result = JSON.parse(response.getContentText());
-  Logger.log('PandaDoc documento creado: ' + JSON.stringify(result));
+  dbgLog(ss, 'PandaDoc POST /documents → ' + response.getResponseCode() + ' | id=' + result.id);
 
   if (!result.id) throw new Error('PandaDoc no retornó id: ' + response.getContentText());
 
   // Polling hasta que el documento esté en draft (máx 30s)
   let ready = false;
+  let ultimoStatus = '';
   for (let i = 0; i < 10; i++) {
     Utilities.sleep(3000);
     const statusResp = UrlFetchApp.fetch(`https://api.pandadoc.com/public/v1/documents/${result.id}`, {
@@ -498,11 +597,12 @@ function enviarContratoPandaDoc(data) {
       muteHttpExceptions: true
     });
     const statusData = JSON.parse(statusResp.getContentText());
-    Logger.log('PandaDoc status poll: ' + statusData.status);
+    ultimoStatus = statusData.status;
     if (statusData.status === 'document.draft') { ready = true; break; }
   }
+  dbgLog(ss, 'PandaDoc polling terminó — último status: ' + ultimoStatus + ' (ready=' + ready + ')');
 
-  if (!ready) throw new Error('PandaDoc: documento no llegó a draft después de 30s');
+  if (!ready) throw new Error('PandaDoc: documento no llegó a draft después de 30s (status final: ' + ultimoStatus + ')');
 
   const sendResp = UrlFetchApp.fetch(`https://api.pandadoc.com/public/v1/documents/${result.id}/send`, {
     method:  'post',
@@ -514,7 +614,11 @@ function enviarContratoPandaDoc(data) {
     muteHttpExceptions: true
   });
 
-  Logger.log('PandaDoc enviado a firma: ' + sendResp.getContentText());
+  const sendStatus = sendResp.getResponseCode();
+  dbgLog(ss, 'PandaDoc POST /send → ' + sendStatus + ' | ' + sendResp.getContentText());
+  if (sendStatus < 200 || sendStatus >= 300) {
+    throw new Error('PandaDoc falló al enviar a firma: ' + sendResp.getContentText());
+  }
 }
 
 // ————————————————————————————
@@ -522,14 +626,196 @@ function enviarContratoPandaDoc(data) {
 // ————————————————————————————
 function testPandaDoc() {
   const data = {
-    recruiter: { nombres: 'Francisco', apellido1: 'Morales', apellido2: 'Monsalves', email_personal: 'sebastian.osses@continuumhq.com' },
-    contrato:  { tipo: 'Peru-Nomina', sueldo_liquido: '3000', moneda: 'PEN', fecha_ingreso: '2026-07-01' },
-    rol:       { cargo: 'Software Engineer', seniority: 'Senior', proyecto: 'Proyecto Test' },
-    ficha:     { nombres: 'Francisco', apellidos: { primero: 'Morales', segundo: 'Monsalves' } },
+    recruiter: {
+      nombres: 'Mario', apellido1: 'Aliaga', apellido2: 'Guzmán',
+      email_personal: 'sebastian.osses@continuumhq.com',
+      numero_documento: '13.735.003-3', nacionalidad: 'Chilena',
+      fecha_nacimiento: '7 de Noviembre de 1979', estado_civil: 'Soltero'
+    },
+    contrato:  { tipo: 'Chile-Nomina', sueldo_liquido: '3.612.686', moneda: 'CLP', fecha_ingreso: '22-06-2026' },
+    rol:       { cargo: 'Software Engineer', seniority: 'Senior', proyecto: 'Proyecto Test', descripcion: 'Diseñar y desarrollar microservicios en Node.js / Java / Go.' },
+    ficha:     {
+      nombres: 'Mario', apellidos: { primero: 'Aliaga', segundo: 'Guzmán' },
+      ubicacion: { ciudad: 'Cartagena', comuna: 'Valparaíso', direccion: 'Echaurren N°7' }
+    },
     metadata:  { session_id: 'test-123' }
   };
   enviarContratoPandaDoc(data);
   Logger.log('testPandaDoc completado');
+}
+
+// ————————————————————————————
+// Talana — catálogos (solo lectura, sin riesgo)
+// ————————————————————————————
+// IMPORTANTE: a pesar del nombre, "sandbox.talana.dev" NO acepta el token de producción.
+// El token entregado por Talana SAC es solo para el dominio productivo real: talana.com
+const TALANA_BASE_URL = 'https://talana.com/es/api';
+
+function talanaGet(path) {
+  const TALANA_API_KEY = PropertiesService.getScriptProperties().getProperty('TALANA_API_KEY');
+  const resp = UrlFetchApp.fetch(TALANA_BASE_URL + path, {
+    method: 'get',
+    headers: { 'Authorization': 'Token ' + TALANA_API_KEY },
+    muteHttpExceptions: true
+  });
+  return JSON.parse(resp.getContentText());
+}
+
+function talanaPost(path, body) {
+  const TALANA_API_KEY = PropertiesService.getScriptProperties().getProperty('TALANA_API_KEY');
+  const resp = UrlFetchApp.fetch(TALANA_BASE_URL + path, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: { 'Authorization': 'Token ' + TALANA_API_KEY },
+    payload: JSON.stringify(body),
+    muteHttpExceptions: true
+  });
+  return { status: resp.getResponseCode(), body: JSON.parse(resp.getContentText() || '{}') };
+}
+
+// Busca el id de un registro de catálogo por nombre (AFP, Banco, Isapre soportan ?nombre=)
+function talanaBuscarIdPorNombre(path, nombre) {
+  if (!nombre) return null;
+  const lista = talanaGet(path + '?nombre=' + encodeURIComponent(nombre));
+  if (!Array.isArray(lista) || lista.length === 0) return null;
+  return lista[0].id;
+}
+
+// Imprime el catálogo de Razón Social — necesario para 'empleadorRazonSocial' en /contrato/
+function testTalanaRazonSocial() {
+  Logger.log(JSON.stringify(talanaGet('/razonSocial/'), null, 2));
+}
+
+// Imprime los 5 catálogos en el Logger — no crea ni modifica nada en Talana
+function testTalanaCatalogos() {
+  const catalogos = {
+    'AFP':            '/afp/',
+    'Isapre/Prevision': '/prevision/',
+    'Banco':          '/banco/',
+    'TipoContrato':   '/tipoContrato/',
+    'JornadaLaboral': '/jornadaLaboral/'
+  };
+
+  Object.entries(catalogos).forEach(([nombre, path]) => {
+    try {
+      const data = talanaGet(path);
+      Logger.log('— ' + nombre + ' —');
+      Logger.log(JSON.stringify(data, null, 2));
+    } catch (err) {
+      Logger.log('ERROR en ' + nombre + ': ' + err.message);
+    }
+  });
+}
+
+// ————————————————————————————
+// Talana — crea Persona y Contrato (Chile-Nómina)
+//
+// Endpoints reales confirmados en developers.talana.com (NO inventados):
+//   POST /persona/   — crea el trabajador, identificado por 'rut'
+//   GET  /persona/?rut=...  — recupera el 'id' numérico interno
+//   POST /contrato/  — usa ese 'id' en el campo 'empleado'
+//
+// PENDIENTE (no implementado todavía): firma digital y generación de PDF.
+// Talana no genera el PDF del contrato desde una plantilla vía API — solo
+// guarda los datos estructurados. Para usar /document/requestSignature
+// primero hay que subir un PDF ya armado vía /documentos/, lo cual requiere
+// que resolvamos cómo generamos ese PDF (Google Docs + merge, o PandaDoc).
+// ————————————————————————————
+function enviarContratoTalana(data) {
+  const ss  = SpreadsheetApp.getActiveSpreadsheet();
+  const r   = data.recruiter || {};
+  const c   = data.contrato  || {};
+  const rol = data.rol       || {};
+  const f   = data.ficha     || {};
+  const m   = data.metadata  || {};
+  const pv  = f.prevision    || {};
+  const bn  = f.banco        || {};
+
+  const rut = normalizarRut(r.numero_documento); // Talana espera "NNNNNNNN-N", sin importar cómo venga el input
+  const sexoMap = { 'Masculino': 'M', 'Femenino': 'F' };
+
+  // 1) Crear Persona
+  const personaBody = {
+    rut: rut,
+    nombre: v(f.nombres || r.nombres || r.nombre),
+    apellidoPaterno: v(f.apellidos?.primero || r.apellido1),
+    apellidoMaterno: v(f.apellidos?.segundo || r.apellido2),
+    email: v(m.correo_corporativo),
+    fechaNacimiento: v(r.fecha_nacimiento),
+    sexo: sexoMap[r.sexo] || 'N',
+    detalles: [{ emailPersonal: v(r.email_personal) }]
+  };
+
+  const respPersona = talanaPost('/persona/', personaBody);
+  dbgLog(ss, 'Talana POST /persona/ → ' + respPersona.status + ' | ' + JSON.stringify(respPersona.body));
+  const yaExiste = respPersona.status !== 201 && /ya existe/i.test(respPersona.body?.detail || '');
+  if (respPersona.status !== 201 && !yaExiste) {
+    throw new Error('Talana falló al crear persona: ' + JSON.stringify(respPersona.body));
+  }
+  if (yaExiste) {
+    dbgLog(ss, 'Talana: persona ya existía, continuando con la existente — ' + respPersona.body.detail);
+  }
+
+  // 2) Recuperar el id numérico interno de esa persona
+  const listaPersona = talanaGet('/persona/?rut=' + encodeURIComponent(rut));
+  if (!Array.isArray(listaPersona) || listaPersona.length === 0) {
+    throw new Error('Talana: no se encontró la persona recién creada con rut ' + rut);
+  }
+  const idPersona = listaPersona[0].id;
+  dbgLog(ss, 'Talana: id numérico de persona = ' + idPersona);
+
+  // 3) Crear Contrato — catálogos resueltos en vivo por nombre
+  const afpId    = talanaBuscarIdPorNombre('/afp/', pv.afp);
+  const isapreId = talanaBuscarIdPorNombre('/prevision/', pv.salud);
+  const bancoId  = talanaBuscarIdPorNombre('/banco/', bn.banco);
+
+  // 'empleadorRazonSocial' es obligatorio: la razón social bajo la cual se contrata.
+  // Hay 2 en la cuenta (CONTINUUM SPA y CONTINUUM HOLDING SPA) — filtramos por el RUT
+  // real de Continuum SpA (76091977-2), NUNCA tomar la primera del array a ciegas.
+  const CONTINUUM_SPA_RUT = '76091977-2';
+  const razonesSociales = talanaGet('/razonSocial/');
+  const razonSocial = Array.isArray(razonesSociales)
+    ? razonesSociales.find(rs => rs.rut === CONTINUUM_SPA_RUT)
+    : null;
+  if (!razonSocial) throw new Error('Talana: no se encontró la razón social CONTINUUM SPA (rut ' + CONTINUUM_SPA_RUT + ')');
+  const razonSocialId = razonSocial.id;
+
+  const contratoBody = {
+    empleado: idPersona,
+    empleadorRazonSocial: razonSocialId,
+    cargo: v(rol.cargo) + ' ' + v(rol.seniority),
+    desde: v(c.fecha_ingreso),
+    fechaContratacion: v(c.fecha_ingreso),
+    sueldoBase: parseFloat(String(c.sueldo_liquido).replace(/[^\d]/g, '')) || 0,
+    afp: afpId,
+    isapre: isapreId,
+    sueldoBanco: bancoId,
+    sueldoCuentaCorriente: v(bn.numero),
+    descripcionDelCargo: v(rol.descripcion),
+    documentoEsContratoOAnexo: 'contrato',
+    disabilities: 'no'
+  };
+
+  const respContrato = talanaPost('/contrato/', contratoBody);
+  dbgLog(ss, 'Talana POST /contrato/ → ' + respContrato.status + ' | ' + JSON.stringify(respContrato.body));
+  if (respContrato.status !== 201) {
+    throw new Error('Talana falló al crear contrato: ' + JSON.stringify(respContrato.body));
+  }
+
+  dbgLog(ss, 'Talana: persona + contrato creados OK. Firma digital pendiente (falta resolver generación de PDF).');
+}
+
+// Prueba manual con datos ficticios claramente marcados — ojo: esto escribe en la base PRODUCTIVA real de Talana
+function testTalanaCrearPersonaYContrato() {
+  const data = {
+    recruiter: { nombres: 'PRUEBA', apellido1: 'INTEGRACION', apellido2: 'TEST', email_personal: 'prueba.integracion@example.com', numero_documento: '11111111-1', fecha_nacimiento: '1990-01-01', sexo: 'Masculino' },
+    contrato:  { tipo: 'Chile-Nomina', sueldo_liquido: '1000000', moneda: 'CLP', fecha_ingreso: '2026-07-01' },
+    rol:       { cargo: 'Cargo Prueba', seniority: 'Test', descripcion: 'Descripción de prueba — no es un trabajador real.' },
+    ficha:     { nombres: 'PRUEBA', apellidos: { primero: 'INTEGRACION', segundo: 'TEST' }, prevision: {}, banco: {} },
+    metadata:  { correo_corporativo: 'prueba.integracion@continuumhq.com' }
+  };
+  enviarContratoTalana(data);
+  Logger.log('testTalanaCrearPersonaYContrato completado — revisa la pestaña _debug');
 }
 
 // ————————————————————————————

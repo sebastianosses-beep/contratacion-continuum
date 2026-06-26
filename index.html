@@ -1035,6 +1035,60 @@ const reverseMap = {
   'Internacional-Servicios': ['Internacional','Servicios']
 };
 
+// Formatea un RUT chileno a "NN.NNN.NNN-N" mientras se escribe
+function formatearRut(valor) {
+  const limpio = valor.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (limpio.length === 0) return '';
+  const cuerpo = limpio.slice(0, -1);
+  const verificador = limpio.slice(-1);
+  if (cuerpo.length === 0) return verificador;
+  const cuerpoFormateado = cuerpo.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return cuerpoFormateado + '-' + verificador;
+}
+
+// Calcula el dígito verificador correcto de un RUT (módulo 11)
+function dvEsperado(cuerpo) {
+  let suma = 0, multiplo = 2;
+  for (let i = cuerpo.length - 1; i >= 0; i--) {
+    suma += parseInt(cuerpo[i], 10) * multiplo;
+    multiplo = multiplo === 7 ? 2 : multiplo + 1;
+  }
+  const resto = 11 - (suma % 11);
+  if (resto === 11) return '0';
+  if (resto === 10) return 'K';
+  return String(resto);
+}
+
+function rutEsValido(valor) {
+  const limpio = valor.replace(/[^0-9kK]/g, '').toUpperCase();
+  if (limpio.length < 2) return false;
+  const cuerpo = limpio.slice(0, -1);
+  const verificador = limpio.slice(-1);
+  return dvEsperado(cuerpo) === verificador;
+}
+
+function initRutField() {
+  const input = document.getElementById('r-rut');
+  const docType = document.getElementById('r-doc-type');
+  if (!input || !docType) return;
+
+  input.addEventListener('input', () => {
+    if (docType.value !== 'RUT') return;
+    input.value = formatearRut(input.value);
+  });
+
+  input.addEventListener('blur', () => {
+    if (docType.value !== 'RUT') { input.style.borderColor = ''; return; }
+    const valido = input.value === '' || rutEsValido(input.value);
+    input.style.borderColor = valido ? '' : '#c0392b';
+  });
+
+  docType.addEventListener('change', () => {
+    input.style.borderColor = '';
+    if (docType.value === 'RUT' && input.value) input.value = formatearRut(input.value);
+  });
+}
+
 function updateContractFromSelects() {
   const pais = document.getElementById('r-pais').value;
   const modalidadSel = document.getElementById('r-modalidad');
@@ -1375,7 +1429,7 @@ function submitFicha(e) {
   goTo(5);
 }
 
-window.onload = () => { updateContractFromSelects(); if (!checkUrlSession()) checkResume(); };
+window.onload = () => { updateContractFromSelects(); initRutField(); if (!checkUrlSession()) checkResume(); };
 </script>
 </body>
 </html>
